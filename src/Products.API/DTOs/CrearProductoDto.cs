@@ -1,0 +1,10 @@
+﻿namespace Products.API.DTOs;
+
+public class CrearProductoDto
+{
+    public required string Nombre { get; set; }
+    public string? Descripcion { get; set; }
+    public decimal Precio { get; set; }
+    public int Stock { get; set; }
+    public required string Categoria { get; set; }
+}
