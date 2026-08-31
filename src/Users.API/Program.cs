@@ -10,6 +10,7 @@ using Serilog.Formatting.Compact;
 using Users.API.Constants;
 using Users.API.ExceptionHandlers;
 using Users.API.Exceptions;
+using Users.API.Services;
 
 const string Servicio = "Users.API";
 
@@ -46,9 +47,12 @@ builder.Services.AddExceptionHandler<BusinessRuleExceptionHandler>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
+// Singleton para que los usuarios no se pierdan entre requests.
+builder.Services.AddSingleton<IUserService, UserService>();
+
 builder.Services.AddHealthChecks()
     .AddCheck("self", () => HealthCheckResult.Healthy("El servicio responde."), tags: ["live"])
-    .AddCheck("ready", () => HealthCheckResult.Healthy("El servicio esta listo."), tags: ["ready"]);
+    .AddCheck("usuarios", () => HealthCheckResult.Healthy("El servicio de usuarios responde."), tags: ["ready"]);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
