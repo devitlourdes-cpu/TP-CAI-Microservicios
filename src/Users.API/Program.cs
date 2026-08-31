@@ -16,9 +16,9 @@ const string Servicio = "Users.API";
 // Serilog va primero para que cualquier error de arranque quede logueado.
 // Consola legible + archivo JSON.
 Log.Logger = new LoggerConfiguration()
-    .Enrich.WithProperty("Servicio", Servicio)
+    .Enrich.WithProperty("Service", Servicio)
     .WriteTo.Console(outputTemplate:
-        "[{Timestamp:HH:mm:ss} {Level:u3}] [{Servicio}] {Message:lj}{NewLine}{Exception}")
+        "[{Timestamp:HH:mm:ss} {Level:u3}] [{Service}] {Message:lj}{NewLine}{Exception}")
     .WriteTo.File(new CompactJsonFormatter(), "logs/users-api-.json",
         rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
     .CreateLogger();
