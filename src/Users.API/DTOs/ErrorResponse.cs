@@ -23,4 +23,8 @@ public class ErrorResponse
 
     /// <example>El email 'maria@email.com' ya está registrado.</example>
     public string ErrorMessage { get; set; } = "";
+
+    /// <summary>Sirve para encontrar el request en los logs.</summary>
+    /// <example>3e80c6ce-68ea-4e3b-9952-e6e1a5d19379</example>
+    public string CorrelationId { get; set; } = "";
 }

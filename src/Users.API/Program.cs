@@ -9,6 +9,7 @@ using Serilog;
 using Serilog.Formatting.Compact;
 using Users.API.Constants;
 using Users.API.ExceptionHandlers;
+using Users.API.Middlewares;
 using Users.API.Exceptions;
 using Users.API.Services;
 
@@ -17,9 +18,10 @@ const string Servicio = "Users.API";
 // Serilog va primero para que cualquier error de arranque quede logueado.
 // Consola legible + archivo JSON.
 Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
     .Enrich.WithProperty("Service", Servicio)
     .WriteTo.Console(outputTemplate:
-        "[{Timestamp:HH:mm:ss} {Level:u3}] [{Service}] {Message:lj}{NewLine}{Exception}")
+        "[{Timestamp:HH:mm:ss} {Level:u3}] [{Service}] [CorrelationId: {CorrelationId}] {Message:lj}{NewLine}{Exception}")
     .WriteTo.File(new CompactJsonFormatter(), "logs/users-api-.json",
         rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
     .CreateLogger();
@@ -70,6 +72,9 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+// Va primero para que el Correlation ID exista en todos los logs del request.
+app.UseMiddleware<CorrelationIdMiddleware>();
 
 // Loguea cada request con su duracion.
 app.UseSerilogRequestLogging();
