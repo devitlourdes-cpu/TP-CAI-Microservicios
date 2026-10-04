@@ -1,11 +1,15 @@
-﻿using Products.API.ExceptionHandlers;
+﻿using Microsoft.AspNetCore.Mvc;
+using Products.API.Exceptions;
+using Products.API.ExceptionHandlers;
 using Products.API.Middlewares;
 using Products.API.Services;
 using Serilog;
 using Serilog.Formatting.Compact;
+using Serilog.Events;
 
 // Logger inicial para capturar errores si falla el arranque
 Log.Logger = new LoggerConfiguration()
+       .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
     .WriteTo.Console()
     .CreateBootstrapLogger();
 
@@ -23,6 +27,15 @@ try
 
     // Servicios
     builder.Services.AddControllers();
+    builder.Services.Configure<ApiBehaviorOptions>(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errores = context.ModelState.SelectMany(e => e.Value!.Errors.Select(x => x.ErrorMessage));
+            throw new ValidationException("PRD-002", $"{string.Join("; ", errores)}.");
+        };
+    });
+
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
