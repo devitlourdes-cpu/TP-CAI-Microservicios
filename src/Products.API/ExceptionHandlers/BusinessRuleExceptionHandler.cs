@@ -3,26 +3,14 @@ using Products.API.Exceptions;
 
 namespace Products.API.ExceptionHandlers;
 
-public class BusinessRuleExceptionHandler : IExceptionHandler
+public class BusinessRuleExceptionHandler(ILogger<BusinessRuleExceptionHandler> logger) : IExceptionHandler
 {
-    public async ValueTask<bool> TryHandleAsync(
-        HttpContext context, Exception exception,
-        CancellationToken cancellationToken)
+    public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception, CancellationToken ct)
     {
         if (exception is not BusinessRuleException ex) return false;
 
-        context.Response.StatusCode = 409;
-        await context.Response.WriteAsJsonAsync(new
-        {
-            type = "https://tools.ietf.org/html/rfc7231#section-6.5.8",
-            title = "Conflict",
-            status = 409,
-            detail = ex.Message,
-            instance = context.Request.Path.Value,
-            errorCode = ex.ErrorCode,
-            errorMessage = ex.Message
-        }, cancellationToken: cancellationToken);
-
+        logger.LogWarning("Regla de negocio. {ErrorCode}: {ErrorMessage}", ex.ErrorCode, ex.Message);
+        await ErrorResponseWriter.WriteAsync(context, ex.StatusCode, ex.ErrorCode, ex.Message, ct);
         return true;
     }
 }

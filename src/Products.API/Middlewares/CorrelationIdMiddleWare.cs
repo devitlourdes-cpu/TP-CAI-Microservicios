@@ -1,28 +1,31 @@
-﻿namespace Products.API.Middlewares;
+﻿using Serilog.Context;
 
-public class CorrelationIdMiddleware
+namespace Products.API.Middlewares;
+
+// Identifica cada request con un X-Correlation-Id para poder seguirlo en los logs
+// y entre microservicios. Si el llamador ya trae uno, se respeta.
+public class CorrelationIdMiddleware(RequestDelegate next)
 {
-    private const string CorrelationIdHeader = "X-Correlation-Id";
-    private readonly RequestDelegate _next;
-
-    public CorrelationIdMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
+    public const string CorrelationIdHeader = "X-Correlation-Id";
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (!context.Request.Headers.TryGetValue(CorrelationIdHeader, out var correlationId) || string.IsNullOrWhiteSpace(correlationId))
-        {
-            correlationId = Guid.NewGuid().ToString();
-        }
+        var correlationId = context.Request.Headers[CorrelationIdHeader].FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(correlationId)) correlationId = Guid.NewGuid().ToString();
 
-        context.Response.Headers[CorrelationIdHeader] = correlationId;
         context.Items[CorrelationIdHeader] = correlationId;
 
-        using (Serilog.Context.LogContext.PushProperty("CorrelationId", correlationId.ToString()))
+        // Se escribe en OnStarting porque UseExceptionHandler limpia la respuesta
+        // al atrapar una excepcion y se llevaria el header puesto antes.
+        context.Response.OnStarting(() =>
         {
-            await _next(context);
+            context.Response.Headers[CorrelationIdHeader] = correlationId;
+            return Task.CompletedTask;
+        });
+
+        using (LogContext.PushProperty("CorrelationId", correlationId))
+        {
+            await next(context);
         }
     }
 }
