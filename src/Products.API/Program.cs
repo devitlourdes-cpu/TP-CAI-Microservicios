@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿   using Serilog.Events;
+using Microsoft.AspNetCore.Mvc;
 using Products.API.Exceptions;
 using Products.API.ExceptionHandlers;
 using Products.API.Middlewares;
@@ -9,6 +10,7 @@ using Serilog.Events;
 
 // Logger inicial para capturar errores si falla el arranque
 Log.Logger = new LoggerConfiguration()
+
        .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
     .WriteTo.Console()
     .CreateBootstrapLogger();
