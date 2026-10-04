@@ -2,7 +2,7 @@
 
 Este microservicio forma parte del sistema de E-Commerce y se encarga de la administración del catálogo de productos.
 
-## 🚀 Tecnologías y Arquitectura
+##  Tecnologías y Arquitectura
 - **Framework:** .NET 10 Web API
 - **Documentación:** Swagger / OpenAPI con anotaciones de respuestas
 - **Manejo de Errores:** `IExceptionHandler` nativo con `ProblemDetails` estandarizados
@@ -11,7 +11,7 @@ Este microservicio forma parte del sistema de E-Commerce y se encarga de la admi
 
 ---
 
-## 🛠️ Endpoints del Catálogo
+##  Endpoints del Catálogo
 
 | Método | Endpoint | Descripción | Códigos HTTP |
 | :--- | :--- | :--- | :--- |
@@ -23,7 +23,7 @@ Este microservicio forma parte del sistema de E-Commerce y se encarga de la admi
 
 ---
 
-## ⚠️ Catálogo de Errores Manejados
+##  Catálogo de Errores Manejados
 - `PRD-001`: Producto no encontrado (HTTP 404).
 - `PRD-002`: Datos de entrada inválidos / Error de validación (HTTP 400).
 - `PRD-003`: Conflicto de producto duplicado en la misma categoría (HTTP 409).
@@ -32,7 +32,7 @@ Este microservicio forma parte del sistema de E-Commerce y se encarga de la admi
 
 ---
 
-## 🩺 Endpoints de Salud (Health Checks)
+##  Endpoints de Salud (Health Checks)
 - `/health`: Estado general del microservicio.
 - `/health/live`: Liveness probe.
 - `/health/ready`: Readiness probe.
