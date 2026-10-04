@@ -1,5 +1,6 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using Users.API.Middlewares;
 
 namespace Users.API.ExceptionHandlers;
 
@@ -25,7 +26,8 @@ public static class ErrorResponseWriter
             detail,
             instance = context.Request.Path.Value,
             errorCode,
-            errorMessage
+            errorMessage,
+            correlationId = context.Items[CorrelationIdMiddleware.CorrelationIdHeader] as string ?? ""
         };
 
         await context.Response.WriteAsJsonAsync(body, JsonOptions,
