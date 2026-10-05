@@ -9,6 +9,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
 using System.Reflection;
+using Products.API.Swagger;
 
 // Logger inicial para capturar errores si falla el arranque
 Log.Logger = new LoggerConfiguration()
@@ -53,6 +54,7 @@ try
         // Para que Swagger muestre los comentarios y ejemplos del código.
         var xml = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
         if (File.Exists(xml)) options.IncludeXmlComments(xml, includeControllerXmlComments: true);
+        options.OperationFilter<ErrorExamplesOperationFilter>();
     });
     builder.Services.AddScoped<IProductoService, ProductoService>();
 
