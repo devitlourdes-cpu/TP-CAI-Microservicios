@@ -19,9 +19,11 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Obtiene el listado de productos con filtros opcionales por categoría y nombre.
     /// </summary>
+    /// <response code="200">Listado de productos.</response>
+    /// <response code="500">Error interno (PRD-005).</response>
     [HttpGet]
     [ProducesResponseType(typeof(List<ProductoResponseDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<List<ProductoResponseDto>>> ObtenerTodos(
         [FromQuery] string? categoria,
         [FromQuery] string? nombre)
@@ -33,10 +35,13 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Obtiene un producto por su ID.
     /// </summary>
+    /// <response code="200">Producto encontrado.</response>
+    /// <response code="404">El producto no existe (PRD-001).</response>
+    /// <response code="500">Error interno (PRD-005).</response>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ProductoResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ProductoResponseDto>> ObtenerPorId(Guid id)
     {
         var producto = await _productoService.ObtenerPorIdAsync(id);
@@ -46,11 +51,15 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Crea un nuevo producto.
     /// </summary>
+    /// <response code="201">Producto creado.</response>
+    /// <response code="400">Datos inválidos (PRD-002).</response>
+    /// <response code="409">Ya existe un producto con ese nombre en la categoría (PRD-003).</response>
+    /// <response code="500">Error interno (PRD-005).</response>
     [HttpPost]
     [ProducesResponseType(typeof(ProductoResponseDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ProductoResponseDto>> Crear([FromBody] CrearProductoDto dto)
     {
         var producto = await _productoService.CrearAsync(dto);
@@ -60,11 +69,15 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Actualiza un producto existente.
     /// </summary>
+    /// <response code="200">Producto actualizado.</response>
+    /// <response code="400">Datos inválidos (PRD-002).</response>
+    /// <response code="404">El producto no existe (PRD-001).</response>
+    /// <response code="500">Error interno (PRD-005).</response>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(ProductoResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ProductoResponseDto>> Actualizar(Guid id, [FromBody] ActualizarProductoDto dto)
     {
         var producto = await _productoService.ActualizarAsync(id, dto);
@@ -74,11 +87,15 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Elimina un producto por su ID.
     /// </summary>
+    /// <response code="204">Producto eliminado.</response>
+    /// <response code="404">El producto no existe (PRD-001).</response>
+    /// <response code="409">El producto tiene órdenes activas (PRD-004).</response>
+    /// <response code="500">Error interno (PRD-005).</response>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Eliminar(Guid id)
     {
         await _productoService.EliminarAsync(id);

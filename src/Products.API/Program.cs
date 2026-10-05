@@ -1,12 +1,15 @@
-﻿   using Serilog.Events;
-using Microsoft.AspNetCore.Mvc;
-using Products.API.Exceptions;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 using Products.API.ExceptionHandlers;
+using Products.API.Exceptions;
 using Products.API.Middlewares;
 using Products.API.Services;
 using Serilog;
-using Serilog.Formatting.Compact;
 using Serilog.Events;
+using Serilog.Formatting.Compact;
+using System.Reflection;
+using Products.API.Swagger;
 
 // Logger inicial para capturar errores si falla el arranque
 Log.Logger = new LoggerConfiguration()
@@ -39,8 +42,20 @@ try
     });
 
     builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen();
+    builder.Services.AddSwaggerGen(options =>
+    {
+        options.SwaggerDoc("v1", new OpenApiInfo
+        {
+            Title = "Products API",
+            Version = "v1",
+            Description = "Microservicio de productos. Todos los errores incluyen errorCode y errorMessage."
+        });
 
+        // Para que Swagger muestre los comentarios y ejemplos del código.
+        var xml = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
+        if (File.Exists(xml)) options.IncludeXmlComments(xml, includeControllerXmlComments: true);
+        options.OperationFilter<ErrorExamplesOperationFilter>();
+    });
     builder.Services.AddScoped<IProductoService, ProductoService>();
 
     builder.Services.AddExceptionHandler<NotFoundExceptionHandler>();
