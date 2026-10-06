@@ -3,13 +3,13 @@
 namespace Products.API.ExceptionHandlers;
 
 // Atrapa cualquier error no contemplado. Va ultimo.
-public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger, IHostEnvironment env) : IExceptionHandler
+public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger, IConfiguration config ) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception, CancellationToken ct)
     {
         logger.LogError(exception, "Error inesperado. {ErrorCode}", "PRD-005");
 
-        var mensaje = env.IsDevelopment()
+        var mensaje = config.GetValue<bool>("ErrorHandling:IncludeExceptionDetail")
             ? $"Error interno al procesar el producto. Detalle: {exception.Message}"
             : "Error interno al procesar el producto.";
 
