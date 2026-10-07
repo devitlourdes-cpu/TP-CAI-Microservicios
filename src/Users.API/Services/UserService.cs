@@ -16,7 +16,7 @@ public class UserService(ILogger<UserService> logger) : IUserService
     private readonly List<User> _users = [];
     private readonly Lock _candado = new();
 
-    public RegisterUserResponse Register(RegisterUserRequest request)
+    public UserResponse Register(RegisterUserRequest request)
     {
         var email = request.Email.Trim();
 
@@ -40,15 +40,18 @@ public class UserService(ILogger<UserService> logger) : IUserService
             _users.Add(user);
             logger.LogInformation("Usuario registrado. Id: {UserId}", user.Id);
 
-            return new RegisterUserResponse
-            {
-                Id = user.Id,
-                Nombre = user.Nombre,
-                Apellido = user.Apellido,
-                Email = user.Email,
-                FechaRegistro = user.FechaRegistro,
-                Activo = user.Activo
-            };
+            return Map(user);
+        }
+    }
+
+    public UserResponse GetById(Guid id)
+    {
+        lock (_candado)
+        {
+            var user = _users.FirstOrDefault(u => u.Id == id)
+                ?? throw new NotFoundException(ErrorCodes.USR_007, "Usuario no encontrado.");
+
+            return Map(user);
         }
     }
 
@@ -109,6 +112,17 @@ public class UserService(ILogger<UserService> logger) : IUserService
                 "Su cuenta fue bloqueada por superar el máximo de intentos fallidos. Contacte a soporte.", 403)
             : new BusinessRuleException(ErrorCodes.USR_005,
                 "Su cuenta fue suspendida por razones de seguridad. Contacte a soporte.", 403);
+
+    // Pasa la entidad al DTO, asi el PasswordHash nunca sale en una respuesta.
+    private static UserResponse Map(User user) => new()
+    {
+        Id = user.Id,
+        Nombre = user.Nombre,
+        Apellido = user.Apellido,
+        Email = user.Email,
+        FechaRegistro = user.FechaRegistro,
+        Activo = user.Activo
+    };
 
     // La contrasena nunca se guarda en texto plano.
     private static string Hash(string password) =>

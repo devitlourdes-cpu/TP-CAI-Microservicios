@@ -11,6 +11,24 @@ namespace Users.API.Controllers;
 [Produces("application/json")]
 public class UsersController(IUserService userService) : ControllerBase
 {
+    /// <summary>Obtiene un usuario por su id.</summary>
+    /// <remarks>
+    /// Lo usan Orders y Notifications para verificar que el usuario exista
+    /// antes de crear una orden o enviar una notificacion.
+    /// </remarks>
+    /// <param name="id">Id del usuario.</param>
+    /// <response code="200">Datos del usuario.</response>
+    /// <response code="404">El usuario no existe (USR-007).</response>
+    /// <response code="500">Error interno (USR-006).</response>
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public ActionResult<UserResponse> GetById(Guid id)
+    {
+        return Ok(userService.GetById(id));
+    }
+
     /// <summary>Registra un nuevo usuario.</summary>
     /// <remarks>
     /// El email no puede repetirse. La password se guarda hasheada y nunca se devuelve.
@@ -29,11 +47,11 @@ public class UsersController(IUserService userService) : ControllerBase
     /// <response code="409">El email ya esta registrado (USR-001).</response>
     /// <response code="500">Error interno (USR-006).</response>
     [HttpPost("register")]
-    [ProducesResponseType(typeof(RegisterUserResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
-    public ActionResult<RegisterUserResponse> Register([FromBody] RegisterUserRequest request)
+    public ActionResult<UserResponse> Register([FromBody] RegisterUserRequest request)
     {
         var response = userService.Register(request);
 
