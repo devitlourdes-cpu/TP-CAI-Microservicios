@@ -73,6 +73,16 @@ public class OrderService(
         return Map(order);
     }
 
+    public bool HasActiveOrders(Guid productoId)
+    {
+        lock (_candado)
+        {
+            return _orders.Any(o =>
+                OrderStates.Activos.Contains(o.Estado) &&
+                o.Items.Any(i => i.ProductoId == productoId));
+        }
+    }
+
     private static OrderResponse Map(Order order) => new()
     {
         Id = order.Id,

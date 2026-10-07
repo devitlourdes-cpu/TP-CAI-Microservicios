@@ -11,4 +11,8 @@ public static class OrderStates
 
     public static readonly string[] Todos =
         [Pendiente, Confirmada, Enviada, Entregada, Cancelada];
+
+    // Una orden activa es la que todavia esta en curso. Products las consulta para
+    // no dejar borrar un producto que alguien tiene pedido (su regla PRD-004).
+    public static readonly string[] Activos = [Pendiente, Confirmada];
 }

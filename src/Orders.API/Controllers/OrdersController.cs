@@ -44,4 +44,24 @@ public class OrdersController(IOrderService orderService) : ControllerBase
 
         return Created($"/api/orders/{response.Id}", response);
     }
+
+    /// <summary>Indica si un producto tiene ordenes en curso.</summary>
+    /// <remarks>
+    /// Lo usa Products.API antes de borrar un producto: si tiene ordenes Pendiente o
+    /// Confirmada, no puede eliminarse (su regla PRD-004).
+    /// </remarks>
+    /// <param name="productId">Id del producto a consultar.</param>
+    /// <response code="200">Resultado de la consulta.</response>
+    /// <response code="500">Error interno (ORD-007).</response>
+    [HttpGet("product/{productId:guid}/active")]
+    [ProducesResponseType(typeof(ProductActiveOrdersResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public ActionResult<ProductActiveOrdersResponse> GetActiveByProduct(Guid productId)
+    {
+        return Ok(new ProductActiveOrdersResponse
+        {
+            ProductoId = productId,
+            TieneOrdenesActivas = orderService.HasActiveOrders(productId)
+        });
+    }
 }
