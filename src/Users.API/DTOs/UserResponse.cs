@@ -1,7 +1,7 @@
 namespace Users.API.DTOs;
 
-/// <summary>Datos del usuario registrado.</summary>
-public class RegisterUserResponse
+/// <summary>Datos de un usuario. No incluye la password.</summary>
+public class UserResponse
 {
     /// <example>a1b2c3d4-0000-0000-0000-111122223333</example>
     public Guid Id { get; set; }
