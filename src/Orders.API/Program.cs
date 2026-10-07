@@ -8,7 +8,9 @@ using Microsoft.OpenApi;
 using Orders.API.Constants;
 using Orders.API.ExceptionHandlers;
 using Orders.API.Exceptions;
+using Orders.API.Http;
 using Orders.API.Middlewares;
+using Orders.API.Services;
 using Serilog;
 using Serilog.Formatting.Compact;
 
@@ -47,6 +49,14 @@ builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
 builder.Services.AddExceptionHandler<BusinessRuleExceptionHandler>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+
+// Orders consume Users y Products por HTTP.
+builder.Services.AddDownstreamHttpClients(builder.Configuration);
+builder.Services.AddSingleton<UsersClient>();
+builder.Services.AddSingleton<ProductsClient>();
+
+// Singleton para que las ordenes no se pierdan entre requests.
+builder.Services.AddSingleton<IOrderService, OrderService>();
 
 builder.Services.AddHealthChecks()
     .AddCheck("self", () => HealthCheckResult.Healthy("El servicio responde."), tags: ["live"])
