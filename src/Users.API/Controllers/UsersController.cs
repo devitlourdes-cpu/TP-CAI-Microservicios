@@ -39,4 +39,32 @@ public class UsersController(IUserService userService) : ControllerBase
 
         return Created($"/api/users/{response.Id}", response);
     }
+
+    /// <summary>Autentica un usuario.</summary>
+    /// <remarks>
+    /// Al tercer intento fallido consecutivo la cuenta se bloquea y pasa a responder 403.
+    /// Un login correcto borra los intentos acumulados.
+    ///
+    ///     POST /api/users/login
+    ///     {
+    ///       "email": "maria@email.com",
+    ///       "password": "MiPassword123!"
+    ///     }
+    ///
+    /// </remarks>
+    /// <response code="200">Usuario autenticado.</response>
+    /// <response code="400">Datos invalidos (USR-002).</response>
+    /// <response code="401">Credenciales incorrectas (USR-003).</response>
+    /// <response code="403">Cuenta bloqueada por intentos fallidos (USR-004) o por fraude (USR-005).</response>
+    /// <response code="500">Error interno (USR-006).</response>
+    [HttpPost("login")]
+    [ProducesResponseType(typeof(LoginUserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public ActionResult<LoginUserResponse> Login([FromBody] LoginUserRequest request)
+    {
+        return Ok(userService.Login(request));
+    }
 }
