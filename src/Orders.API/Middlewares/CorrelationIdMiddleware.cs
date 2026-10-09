@@ -2,8 +2,6 @@ using Serilog.Context;
 
 namespace Orders.API.Middlewares;
 
-// Identifica cada request con un X-Correlation-Id para poder seguirlo en los logs
-// y entre microservicios. Si el llamador ya trae uno, se respeta.
 public class CorrelationIdMiddleware(RequestDelegate next)
 {
     public const string CorrelationIdHeader = "X-Correlation-Id";

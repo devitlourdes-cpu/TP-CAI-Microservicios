@@ -16,8 +16,7 @@ using Serilog.Formatting.Compact;
 
 const string Servicio = "Orders.API";
 
-// Serilog va primero para que cualquier error de arranque quede logueado.
-// Consola legible + archivo JSON.
+// Serilog va primero para que un error de arranque tambien quede logueado.
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .Enrich.WithProperty("Service", Servicio)
@@ -50,7 +49,6 @@ builder.Services.AddExceptionHandler<BusinessRuleExceptionHandler>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-// Orders consume Users y Products por HTTP.
 builder.Services.AddDownstreamHttpClients(builder.Configuration);
 builder.Services.AddSingleton<UsersClient>();
 builder.Services.AddSingleton<ProductsClient>();
@@ -72,17 +70,14 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Microservicio de ordenes. Todos los errores incluyen errorCode y errorMessage."
     });
 
-    // Para que Swagger muestre los comentarios del codigo.
     var xml = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
     if (File.Exists(xml)) options.IncludeXmlComments(xml, includeControllerXmlComments: true);
 });
 
 var app = builder.Build();
 
-// Va primero para que el Correlation ID exista en todos los logs del request.
 app.UseMiddleware<CorrelationIdMiddleware>();
 
-// Loguea cada request con su duracion.
 app.UseSerilogRequestLogging();
 
 app.UseExceptionHandler();

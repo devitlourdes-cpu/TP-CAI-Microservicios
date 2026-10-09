@@ -3,7 +3,6 @@ using Orders.API.Constants;
 
 namespace Orders.API.ExceptionHandlers;
 
-// Atrapa cualquier error no contemplado. Va ultimo.
 public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger, IHostEnvironment env) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception, CancellationToken ct)

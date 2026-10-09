@@ -1,6 +1,5 @@
 namespace Orders.API.Constants;
 
-// Estados posibles de una orden (Apendice A del enunciado).
 public static class OrderStates
 {
     public const string Pendiente = "Pendiente";
@@ -12,7 +11,6 @@ public static class OrderStates
     public static readonly string[] Todos =
         [Pendiente, Confirmada, Enviada, Entregada, Cancelada];
 
-    // Una orden activa es la que todavia esta en curso. Products las consulta para
-    // no dejar borrar un producto que alguien tiene pedido (su regla PRD-004).
+    // Products consulta estos dos estados para no dejar borrar un producto pedido.
     public static readonly string[] Activos = [Pendiente, Confirmada];
 }

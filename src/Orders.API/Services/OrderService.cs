@@ -17,7 +17,6 @@ public class OrderService(
 
     public async Task<OrderResponse> CreateAsync(CreateOrderRequest request, CancellationToken ct)
     {
-        // ORD-003: el usuario tiene que existir en Users.API.
         if (!await usersClient.ExistsAsync(request.UsuarioId, ct))
             throw new NotFoundException(ErrorCodes.ORD_003, "Usuario no encontrado al crear la orden.");
 
@@ -31,11 +30,9 @@ public class OrderService(
 
         foreach (var (productoId, cantidad) in cantidadPedida)
         {
-            // ORD-004: el producto tiene que existir en Products.API.
             var producto = await productsClient.GetByIdAsync(productoId, ct)
                 ?? throw new NotFoundException(ErrorCodes.ORD_004, "Producto no encontrado al crear la orden.");
 
-            // ORD-005: no se puede pedir mas de lo que hay.
             if (producto.Stock < cantidad)
                 throw new BusinessRuleException(ErrorCodes.ORD_005,
                     $"Stock insuficiente para '{producto.Nombre}'. " +
@@ -48,8 +45,6 @@ public class OrderService(
         {
             Id = Guid.NewGuid(),
             UsuarioId = request.UsuarioId,
-            // El precio se congela al crear la orden: si despues cambia en Products,
-            // esta orden sigue valiendo lo mismo.
             Items = [.. request.Items.Select(i => new OrderItem
             {
                 ProductoId = i.ProductoId,

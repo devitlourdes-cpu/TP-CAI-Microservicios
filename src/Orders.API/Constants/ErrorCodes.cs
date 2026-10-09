@@ -1,6 +1,5 @@
 namespace Orders.API.Constants;
 
-// Catalogo de errores de Orders (seccion 4.3 del enunciado).
 public static class ErrorCodes
 {
     public const string ORD_001 = "ORD-001";   // 404 - Orden no encontrada

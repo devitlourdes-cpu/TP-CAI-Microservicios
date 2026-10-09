@@ -3,14 +3,10 @@ using System.Net.Http.Json;
 
 namespace Orders.API.Http;
 
-// Lo unico que Orders necesita de un producto: el nombre para el mensaje de error,
-// el precio para el item y el stock para validar. Products devuelve mas campos.
 public record ProductInfo(Guid Id, string Nombre, decimal Precio, int Stock);
 
-// Consulta productos en Products.API, para validar ORD-004 y ORD-005.
 public class ProductsClient(IHttpClientFactory factory, ILogger<ProductsClient> logger)
 {
-    // Devuelve null cuando el producto no existe.
     public async Task<ProductInfo?> GetByIdAsync(Guid productoId, CancellationToken ct)
     {
         var client = factory.CreateClient(HttpClients.Products);

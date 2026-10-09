@@ -4,8 +4,6 @@ using Orders.API.Middlewares;
 
 namespace Orders.API.ExceptionHandlers;
 
-// Arma el body de error que pide el enunciado. Todos los handlers pasan por aca
-// para que la respuesta salga siempre igual.
 public static class ErrorResponseWriter
 {
     // Sin escapar comillas ni acentos, para que se lea igual que en el enunciado.

@@ -2,7 +2,6 @@ using System.Net;
 
 namespace Orders.API.Http;
 
-// Consulta a Users.API si un usuario existe, para validar ORD-003.
 public class UsersClient(IHttpClientFactory factory, ILogger<UsersClient> logger)
 {
     public async Task<bool> ExistsAsync(Guid usuarioId, CancellationToken ct)
