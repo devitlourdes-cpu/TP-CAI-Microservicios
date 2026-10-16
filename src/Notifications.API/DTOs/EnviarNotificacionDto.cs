@@ -1,23 +1,20 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Notifications.API.DTOs;
 
-/// <summary>Datos de una notificacion registrada.</summary>
-public class NotificacionResponseDto
+/// <summary>Datos para registrar y simular el envio de una notificacion.</summary>
+public class EnviarNotificacionDto
 {
-    /// <example>11112222-3333-4444-5555-666677778888</example>
-    public Guid Id { get; set; }
-
     /// <example>a1b2c3d4-0000-0000-0000-111122223333</example>
+    [Required(ErrorMessage = "El usuario destinatario es obligatorio")]
     public Guid UsuarioId { get; set; }
 
     /// <example>Su orden #f1e2d3c4 fue confirmada.</example>
+    [Required(ErrorMessage = "El mensaje es obligatorio")]
+    [StringLength(500, ErrorMessage = "El mensaje no puede superar los 500 caracteres")]
     public string Mensaje { get; set; } = "";
 
     /// <example>Email</example>
+    [Required(ErrorMessage = "El tipo de notificacion es obligatorio")]
     public string Tipo { get; set; } = "";
-
-    /// <example>Enviada</example>
-    public string Estado { get; set; } = "";
-
-    /// <example>2024-03-10T12:01:00Z</example>
-    public DateTime FechaEnvio { get; set; }
 }

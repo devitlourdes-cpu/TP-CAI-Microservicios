@@ -1,18 +1,23 @@
-using System.Runtime.InteropServices;
+namespace Notifications.API.DTOs;
 
-// En proyectos de estilo SDK como este, varios atributos de ensamblado que definían
-// en este archivo se agregan ahora automáticamente durante la compilación y se rellenan
-// con valores definidos en las propiedades del proyecto. Para obtener detalles acerca
-// de los atributos que se incluyen y cómo personalizar este proceso, consulte https://aka.ms/assembly-info-properties
+/// <summary>Datos de una notificacion registrada.</summary>
+public class NotificacionResponseDto
+{
+    /// <example>11112222-3333-4444-5555-666677778888</example>
+    public Guid Id { get; set; }
 
+    /// <example>a1b2c3d4-0000-0000-0000-111122223333</example>
+    public Guid UsuarioId { get; set; }
 
-// Al establecer ComVisible en false, se consigue que los tipos de este ensamblado
-// no sean visibles para los componentes COM. Si tiene que acceder a un tipo en este
-// ensamblado desde COM, establezca el atributo ComVisible en true en ese tipo.
+    /// <example>Su orden #f1e2d3c4 fue confirmada.</example>
+    public string Mensaje { get; set; } = "";
 
-[assembly: ComVisible(false)]
+    /// <example>Email</example>
+    public string Tipo { get; set; } = "";
 
-// El siguiente GUID es para el identificador de typelib, si este proyecto se expone
-// en COM.
+    /// <example>Enviada</example>
+    public string Estado { get; set; } = "";
 
-[assembly: Guid("7bcab8d2-078a-4822-82d8-e60e72962e8d")]
+    /// <example>2024-03-10T12:01:00Z</example>
+    public DateTime FechaEnvio { get; set; }
+}
