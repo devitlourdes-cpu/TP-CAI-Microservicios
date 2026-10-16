@@ -8,6 +8,7 @@ namespace Notifications.API.ExceptionHandlers;
 // para que la respuesta salga siempre igual.
 public static class ErrorResponseWriter
 {
+    // Sin escapar comillas ni acentos, para que se lea igual que en el enunciado.
     private static readonly JsonSerializerOptions JsonOptions =
         new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
@@ -37,15 +38,9 @@ public static class ErrorResponseWriter
     {
         400 => ("https://tools.ietf.org/html/rfc7231#section-6.5.1", "Bad Request",
                 "Los datos enviados no son válidos."),
-        401 => ("https://tools.ietf.org/html/rfc7235#section-3.1", "Unauthorized",
-                "Las credenciales no son válidas."),
-        403 => ("https://tools.ietf.org/html/rfc7231#section-6.5.3", "Forbidden",
-                "El acceso está prohibido."),
         404 => ("https://tools.ietf.org/html/rfc7231#section-6.5.4", "Not Found",
                 "El recurso solicitado no fue encontrado."),
-        409 => ("https://tools.ietf.org/html/rfc7231#section-6.5.9", "Conflict",
-                "Ya existe un recurso con esos datos."),
-        _   => ("https://tools.ietf.org/html/rfc7231#section-6.6.1", "Internal Server Error",
+        _ => ("https://tools.ietf.org/html/rfc7231#section-6.6.1", "Internal Server Error",
                 "Ocurrió un error inesperado al procesar la solicitud.")
     };
 }
