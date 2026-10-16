@@ -64,6 +64,28 @@ public class OrdersController(IOrderService orderService) : ControllerBase
     }
 
     /// <summary>
+    /// Actualiza el estado de una orden.
+    /// </summary>
+    /// <param name="id">Id de la orden.</param>
+    /// <param name="request">Nuevo estado.</param>
+    /// <response code="200">Estado actualizado.</response>
+    /// <response code="400">El estado no existe (ORD-002).</response>
+    /// <response code="404">La orden no existe (ORD-001).</response>
+    /// <response code="409">La transicion no es valida (ORD-006).</response>
+    /// <response code="500">Error interno (ORD-007).</response>
+    [HttpPut("{id:guid}/status")]
+    [ProducesResponseType(typeof(OrderStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public ActionResult<OrderStatusResponse> UpdateStatus(
+        Guid id, [FromBody] UpdateOrderStatusRequest request)
+    {
+        return Ok(orderService.UpdateStatus(id, request));
+    }
+
+    /// <summary>
     /// Indica si un producto tiene ordenes Pendiente o Confirmada. Lo consulta
     /// Products.API antes de borrar un producto, para su regla PRD-004.
     /// </summary>

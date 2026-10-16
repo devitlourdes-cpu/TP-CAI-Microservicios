@@ -90,6 +90,39 @@ public class OrderService(
         }
     }
 
+    public OrderStatusResponse UpdateStatus(Guid id, UpdateOrderStatusRequest request)
+    {
+        var nuevo = request.Estado.Trim();
+
+        if (!OrderStates.Existe(nuevo))
+            throw new ValidationException(ErrorCodes.ORD_002,
+                $"El estado '{nuevo}' no existe. Valores validos: {string.Join(", ", OrderStates.Todos)}.");
+
+        nuevo = OrderStates.Normalizar(nuevo);
+
+        lock (_candado)
+        {
+            var order = _orders.FirstOrDefault(o => o.Id == id)
+                ?? throw new NotFoundException(ErrorCodes.ORD_001, "Orden no encontrada.");
+
+            if (!OrderStates.PuedePasarA(order.Estado, nuevo))
+                throw new BusinessRuleException(ErrorCodes.ORD_006,
+                    $"Una orden en estado '{order.Estado}' no puede pasar a '{nuevo}'.");
+
+            order.Estado = nuevo;
+            order.FechaActualizacion = DateTime.UtcNow;
+
+            logger.LogInformation("Orden {OrdenId} pasa a estado {Estado}", order.Id, nuevo);
+
+            return new OrderStatusResponse
+            {
+                Id = order.Id,
+                Estado = order.Estado,
+                FechaActualizacion = order.FechaActualizacion.Value
+            };
+        }
+    }
+
     public bool HasActiveOrders(Guid productoId)
     {
         lock (_candado)

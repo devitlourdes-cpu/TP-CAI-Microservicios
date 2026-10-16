@@ -10,5 +10,7 @@ public interface IOrderService
 
     OrderResponse GetById(Guid id);
 
+    OrderStatusResponse UpdateStatus(Guid id, UpdateOrderStatusRequest request);
+
     bool HasActiveOrders(Guid productoId);
 }
