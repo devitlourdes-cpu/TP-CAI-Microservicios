@@ -117,6 +117,7 @@ Todos los errores tienen este formato:
 ### Correlation ID
 
 Cada request lleva un header `X-Correlation-Id`. Si el cliente no lo envía, el servicio genera uno. Aparece en la respuesta, en el cuerpo de los errores y en todos los logs de ese request.
+
 ---
 
 ## Users.API
@@ -206,7 +207,10 @@ Las URLs de los servicios que consume salen de la sección `Services` de `appset
 
 | Método | Ruta | Descripción | Respuestas |
 |---|---|---|---|
+| GET | /api/orders | Lista órdenes (filtro `?usuarioId=`) | 200, 500 |
+| GET | /api/orders/{id} | Obtiene una orden por ID | 200, 404, 500 |
 | POST | /api/orders | Crea una orden | 201, 400, 404, 422, 500 |
+| PUT | /api/orders/{id}/status | Actualiza el estado de una orden | 200, 400, 404, 409, 500 |
 | GET | /api/orders/product/{productId}/active | Indica si un producto tiene órdenes en curso | 200, 500 |
 
 ### Modelo de orden
