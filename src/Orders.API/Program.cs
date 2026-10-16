@@ -10,6 +10,7 @@ using Orders.API.ExceptionHandlers;
 using Orders.API.Exceptions;
 using Orders.API.Http;
 using Orders.API.Middlewares;
+using Orders.API.Swagger;
 using Orders.API.Services;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -72,6 +73,8 @@ builder.Services.AddSwaggerGen(options =>
 
     var xml = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
     if (File.Exists(xml)) options.IncludeXmlComments(xml, includeControllerXmlComments: true);
+
+    options.OperationFilter<ErrorExamplesOperationFilter>();
 });
 
 var app = builder.Build();
