@@ -21,7 +21,7 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .Enrich.WithProperty("Service", Servicio)
     .WriteTo.Console(outputTemplate:
-        "[{Timestamp:HH:mm:ss} {Level:u3}] [{Service}] [CorrelationId: {CorrelationId}] {Message:lj}{NewLine}{Exception}")
+        "[{Timestamp:HH:mm:ss} {Level:u3}] [{Service}] [{Endpoint}] [CorrelationId: {CorrelationId}] {Message:lj}{NewLine}{Exception}")
     .WriteTo.File(new CompactJsonFormatter(), "logs/orders-api-.json",
         rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
     .CreateLogger();
