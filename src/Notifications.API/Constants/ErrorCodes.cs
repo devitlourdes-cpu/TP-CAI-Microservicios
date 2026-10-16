@@ -8,3 +8,4 @@ public static class ErrorCodes
     public const string NTF_003 = "NTF-003";   // 404 - No se encontraron notificaciones para el usuario
     public const string NTF_004 = "NTF-004";   // 500 - Error interno
 }
+git status
