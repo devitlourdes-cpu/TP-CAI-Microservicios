@@ -68,6 +68,28 @@ public class OrderService(
         return Map(order);
     }
 
+    public List<OrderResponse> GetAll(Guid? usuarioId)
+    {
+        lock (_candado)
+        {
+            return [.. _orders
+                .Where(o => usuarioId is null || o.UsuarioId == usuarioId)
+                .OrderByDescending(o => o.FechaCreacion)
+                .Select(Map)];
+        }
+    }
+
+    public OrderResponse GetById(Guid id)
+    {
+        lock (_candado)
+        {
+            var order = _orders.FirstOrDefault(o => o.Id == id)
+                ?? throw new NotFoundException(ErrorCodes.ORD_001, "Orden no encontrada.");
+
+            return Map(order);
+        }
+    }
+
     public bool HasActiveOrders(Guid productoId)
     {
         lock (_candado)

@@ -12,6 +12,36 @@ namespace Orders.API.Controllers;
 public class OrdersController(IOrderService orderService) : ControllerBase
 {
     /// <summary>
+    /// Lista las ordenes, con filtro opcional por usuario.
+    /// </summary>
+    /// <param name="usuarioId">Id del usuario por el que filtrar.</param>
+    /// <response code="200">Listado de ordenes.</response>
+    /// <response code="500">Error interno (ORD-007).</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(List<OrderResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public ActionResult<List<OrderResponse>> GetAll([FromQuery] Guid? usuarioId)
+    {
+        return Ok(orderService.GetAll(usuarioId));
+    }
+
+    /// <summary>
+    /// Obtiene el detalle de una orden.
+    /// </summary>
+    /// <param name="id">Id de la orden.</param>
+    /// <response code="200">Orden encontrada.</response>
+    /// <response code="404">La orden no existe (ORD-001).</response>
+    /// <response code="500">Error interno (ORD-007).</response>
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(OrderResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public ActionResult<OrderResponse> GetById(Guid id)
+    {
+        return Ok(orderService.GetById(id));
+    }
+
+    /// <summary>
     /// Crea una nueva orden validando el usuario, los productos y el stock.
     /// </summary>
     /// <response code="201">Orden creada.</response>
