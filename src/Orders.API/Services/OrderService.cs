@@ -107,7 +107,8 @@ public class OrderService(
 
             if (!OrderStates.PuedePasarA(order.Estado, nuevo))
                 throw new BusinessRuleException(ErrorCodes.ORD_006,
-                    $"Una orden en estado '{order.Estado}' no puede pasar a '{nuevo}'.");
+                    $"Una orden en estado '{order.Estado}' no puede pasar a '{nuevo}'.",
+                    409, "No se puede modificar el estado.");
 
             order.Estado = nuevo;
             order.FechaActualizacion = DateTime.UtcNow;
