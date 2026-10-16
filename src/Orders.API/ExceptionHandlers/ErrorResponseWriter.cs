@@ -11,9 +11,10 @@ public static class ErrorResponseWriter
         new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     public static async Task WriteAsync(HttpContext context, int statusCode,
-        string errorCode, string errorMessage, CancellationToken ct)
+        string errorCode, string errorMessage, CancellationToken ct, string? detailPropio = null)
     {
-        var (type, title, detail) = Describe(statusCode);
+        var (type, title, detailGenerico) = Describe(statusCode);
+        var detail = detailPropio ?? detailGenerico;
         context.Response.StatusCode = statusCode;
 
         var body = new

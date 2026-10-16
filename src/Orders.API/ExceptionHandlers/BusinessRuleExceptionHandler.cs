@@ -10,7 +10,7 @@ public class BusinessRuleExceptionHandler(ILogger<BusinessRuleExceptionHandler> 
         if (exception is not BusinessRuleException ex) return false;
 
         logger.LogWarning("Regla de negocio. {ErrorCode}: {ErrorMessage}", ex.ErrorCode, ex.Message);
-        await ErrorResponseWriter.WriteAsync(context, ex.StatusCode, ex.ErrorCode, ex.Message, ct);
+        await ErrorResponseWriter.WriteAsync(context, ex.StatusCode, ex.ErrorCode, ex.Message, ct, ex.Detail);
         return true;
     }
 }

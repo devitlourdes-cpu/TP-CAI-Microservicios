@@ -1,7 +1,8 @@
 namespace Orders.API.Models;
 
-// Entidad Orden (Apendice A). FechaActualizacion no figura en el Apendice, pero
-// la respuesta del PUT /status la devuelve, asi que hace falta guardarla.
+/// <summary>
+/// Orden de compra de un usuario.
+/// </summary>
 public class Order
 {
     public Guid Id { get; set; }
