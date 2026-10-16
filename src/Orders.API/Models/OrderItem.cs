@@ -1,7 +1,8 @@
 namespace Orders.API.Models;
 
-// El PrecioUnitario se copia del producto al crear la orden, para que un cambio
-// de precio posterior en Products no altere ordenes ya hechas.
+/// <summary>
+/// Producto dentro de una orden. El precio se copia del producto al crear la orden.
+/// </summary>
 public class OrderItem
 {
     public Guid ProductoId { get; set; }
