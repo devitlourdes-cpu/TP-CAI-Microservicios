@@ -5,4 +5,5 @@ namespace Users.API.Services;
 public interface IUserService
 {
     RegisterUserResponse Register(RegisterUserRequest request);
+    RegisterUserResponse GetById(Guid id);
 }

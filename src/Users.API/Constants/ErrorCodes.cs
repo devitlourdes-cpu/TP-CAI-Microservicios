@@ -9,4 +9,5 @@ public static class ErrorCodes
     public const string USR_004 = "USR-004";   // 403 - Bloqueado por intentos fallidos
     public const string USR_005 = "USR-005";   // 403 - Bloqueado por fraude
     public const string USR_006 = "USR-006";   // 500 - Error interno
+    public const string USR_007 = "USR-007";   // 404 - Usuario no encontrado
 }

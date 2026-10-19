@@ -39,4 +39,26 @@ public class UsersController(IUserService userService) : ControllerBase
 
         return Created($"/api/users/{response.Id}", response);
     }
+
+    /// <summary>Obtiene un usuario por su Id.</summary>
+    /// <remarks>
+    /// Lo usan otros microservicios (por ejemplo Notifications.API) para validar que
+    /// un usuario exista antes de operar sobre el.
+    ///
+    ///     GET /api/users/a1b2c3d4-0000-0000-0000-111122223333
+    ///
+    /// </remarks>
+    /// <response code="200">Usuario encontrado.</response>
+    /// <response code="404">No existe un usuario con ese Id (USR-007).</response>
+    /// <response code="500">Error interno (USR-006).</response>
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(RegisterUserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public ActionResult<RegisterUserResponse> GetById(Guid id)
+    {
+        var response = userService.GetById(id);
+
+        return Ok(response);
+    }
 }
