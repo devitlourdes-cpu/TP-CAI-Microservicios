@@ -58,7 +58,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<CorrelationIdDelegatingHandler>();
 builder.Services.AddHttpClient<IUsersApiClient, UsersApiClient>(client =>
 {
-    var baseUrl = builder.Configuration["UsersApi:BaseUrl"] ?? "http://localhost:5002";
+    var baseUrl = builder.Configuration["UsersApi:BaseUrl"] ?? "https://localhost:7002";
     client.BaseAddress = new Uri(baseUrl);
     client.Timeout = TimeSpan.FromSeconds(5);
 }).AddHttpMessageHandler<CorrelationIdDelegatingHandler>();
