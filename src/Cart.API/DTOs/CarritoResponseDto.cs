@@ -5,5 +5,6 @@ public class CarritoResponseDto
 {
     public Guid UsuarioId { get; set; }
     public List<CarritoItemResponseDto> Items { get; set; } = [];
+    public DateTime FechaActualizacion { get; set; }
     public decimal Total => Items.Sum(i => i.Subtotal);
 }

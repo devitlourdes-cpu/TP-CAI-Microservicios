@@ -61,6 +61,7 @@ public class CartService(IProductsApiClient productsApi) : ICartService
                 item.PrecioUnitario = producto.Precio;
             }
 
+            carrito.FechaActualizacion = DateTime.UtcNow;
             return Mapear(carrito);
         }
     }
@@ -85,6 +86,7 @@ public class CartService(IProductsApiClient productsApi) : ICartService
             item.Cantidad = dto.Cantidad;
             item.PrecioUnitario = producto.Precio;
 
+            carrito.FechaActualizacion = DateTime.UtcNow;
             return Mapear(carrito);
         }
     }
@@ -97,6 +99,7 @@ public class CartService(IProductsApiClient productsApi) : ICartService
                 ?? throw new NotFoundException(ErrorCodes.CRT_001, "No hay carrito activo para este usuario.");
 
             carrito.Items.RemoveAll(i => i.ProductoId == productId);
+            carrito.FechaActualizacion = DateTime.UtcNow;
             return Task.CompletedTask;
         }
     }
@@ -109,6 +112,7 @@ public class CartService(IProductsApiClient productsApi) : ICartService
                 ?? throw new NotFoundException(ErrorCodes.CRT_001, "No hay carrito activo para este usuario.");
 
             carrito.Items.Clear();
+            carrito.FechaActualizacion = DateTime.UtcNow;
             return Task.CompletedTask;
         }
     }
@@ -116,6 +120,7 @@ public class CartService(IProductsApiClient productsApi) : ICartService
     private static CarritoResponseDto Mapear(Carrito carrito) => new()
     {
         UsuarioId = carrito.UsuarioId,
+        FechaActualizacion = carrito.FechaActualizacion,
         Items = carrito.Items.Select(i => new CarritoItemResponseDto
         {
             ProductoId = i.ProductoId,
