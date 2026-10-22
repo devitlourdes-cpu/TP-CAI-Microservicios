@@ -1,0 +1,9 @@
+﻿namespace Cart.API.DTOs;
+
+/// <summary>El carrito completo de un usuario.</summary>
+public class CarritoResponseDto
+{
+    public Guid UsuarioId { get; set; }
+    public List<CarritoItemResponseDto> Items { get; set; } = [];
+    public decimal Total => Items.Sum(i => i.Subtotal);
+}
