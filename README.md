@@ -1,4 +1,4 @@
-# TP-CAI-Microservicios
+﻿# TP-CAI-Microservicios
 
 TP de Construcción de Aplicaciones Informáticas — E-commerce con microservicios en .NET 10.
 
@@ -34,6 +34,8 @@ dotnet build ECommerce.sln
 | Products.API | 65085 | 65084 | http://localhost:65085/swagger |
 | Users.API | 5002 | 7002 | http://localhost:5002/swagger |
 | Orders.API | 5003 | 7003 | http://localhost:5003/swagger |
+| Cart.API | 5005 | 7005 | http://localhost:5005/swagger |
+| Notifications.API | 5004 | 7004 | http://localhost:5004/swagger |
 
 ---
 
@@ -256,3 +258,115 @@ Cada item tiene:
 | Cancelada | — |
 
 Cualquier otra combinación responde 409 con ORD-006.
+
+---
+
+## Cart.API
+
+Microservicio de carrito de compras del e-commerce. Permite agregar, actualizar, quitar y vaciar los items del carrito de cada usuario, validando contra Products.API.
+
+| Dato | Valor |
+|---|---|
+| Puerto HTTP | 5005 |
+| Puerto HTTPS | 7005 |
+| Swagger | http://localhost:5005/swagger |
+| Persistencia | En memoria (los datos se pierden al reiniciar el servicio) |
+| Logs | Consola y archivo `logs/cart-api-<fecha>.json` |
+| Depende de | Products.API |
+
+### Cómo ejecutarlo
+
+Necesita Products.API levantado para validar productos y stock. Lo más simple es `./scripts/run-all.sh`.
+
+```bash
+dotnet run --project src/Cart.API
+```
+
+La URL de Products.API sale de la sección `ProductsApi` de `appsettings.json`.
+
+### Endpoints
+
+| Método | Ruta | Descripción | Respuestas |
+|---|---|---|---|
+| GET | /api/cart/{userId} | Obtiene el carrito de un usuario | 200, 404, 500 |
+| POST | /api/cart/{userId}/items | Agrega un producto al carrito | 200, 400, 404, 422, 500 |
+| PUT | /api/cart/{userId}/items/{productId} | Actualiza la cantidad de un item | 200, 400, 404, 422, 500 |
+| DELETE | /api/cart/{userId}/items/{productId} | Quita un producto del carrito | 204, 404, 500 |
+| DELETE | /api/cart/{userId} | Vacía el carrito completo | 204, 404, 500 |
+
+### Modelo de carrito
+
+| Campo | Tipo | Regla |
+|---|---|---|
+| usuarioId | GUID | Dueño del carrito |
+| items | lista | Productos agregados (ver abajo) |
+| fechaActualizacion | fecha | Se actualiza en cada operación sobre el carrito |
+
+Cada item tiene:
+
+| Campo | Tipo | Regla |
+|---|---|---|
+| productoId | GUID | Tiene que existir en Products.API |
+| nombreProducto | texto | Se copia del producto al agregarlo |
+| precioUnitario | decimal | Se copia del producto al agregarlo |
+| cantidad | entero | Mayor a 0 |
+
+### Códigos de error
+
+| Código | HTTP | Mensaje | Cuándo ocurre |
+|---|---|---|---|
+| CRT-001 | 404 | No hay carrito activo para este usuario. | El usuario no tiene carrito creado todavía |
+| CRT-002 | 404 | Producto no encontrado (en Products.API o en el carrito del usuario). | El productoId no existe en Products.API, o no está dentro del carrito al actualizarlo |
+| CRT-003 | 422 | Stock insuficiente. | La cantidad pedida supera el stock disponible en Products.API |
+| CRT-004 | 400 | Cantidad inválida. | La cantidad es 0 o negativa |
+| CRT-005 | 500 | Error interno al procesar el carrito. | Error inesperado |
+
+---
+
+## Notifications.API
+
+Microservicio de notificaciones del e-commerce. Registra y simula el envío de notificaciones a los usuarios, validándolos contra Users.API.
+
+| Dato | Valor |
+|---|---|
+| Puerto HTTP | 5004 |
+| Puerto HTTPS | 7004 |
+| Swagger | http://localhost:5004/swagger |
+| Persistencia | En memoria (los datos se pierden al reiniciar el servicio) |
+| Logs | Consola y archivo `logs/notifications-api-<fecha>.json` |
+| Depende de | Users.API |
+
+### Cómo ejecutarlo
+
+Necesita Users.API levantado para validar que el usuario exista. Lo más simple es `./scripts/run-all.sh`.
+
+```bash
+dotnet run --project src/Notifications.API
+```
+
+### Endpoints
+
+| Método | Ruta | Descripción | Respuestas |
+|---|---|---|---|
+| POST | /api/notifications/send | Registra y simula el envío de una notificación | 201, 400, 404, 500 |
+| GET | /api/notifications/{userId} | Lista las notificaciones de un usuario | 200, 404, 500 |
+
+### Modelo de notificación
+
+| Campo | Tipo | Regla |
+|---|---|---|
+| id | GUID | Lo genera el servicio |
+| usuarioId | GUID | Tiene que existir en Users.API |
+| mensaje | texto | Obligatorio, máximo 500 caracteres |
+| tipo | texto | Email, SMS o Push |
+| estado | texto | "Enviada" (el envío real está simulado) |
+| fechaEnvio | fecha | La genera el servicio |
+
+### Códigos de error
+
+| Código | HTTP | Mensaje | Cuándo ocurre |
+|---|---|---|---|
+| NTF-001 | 404 | Usuario no encontrado. | El usuarioId no existe en Users.API |
+| NTF-002 | 400 | Los datos de la notificación son inválidos. | Campos faltantes o un tipo no reconocido |
+| NTF-003 | 404 | No se encontraron notificaciones para el usuario. | GET /api/notifications/{userId} sin notificaciones registradas |
+| NTF-004 | 500 | Error interno al procesar la notificación. | Error inesperado |
