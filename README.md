@@ -1,4 +1,4 @@
-﻿# TP-CAI-Microservicios
+# TP-CAI-Microservicios
 
 TP de Construcción de Aplicaciones Informáticas — E-commerce con microservicios en .NET 10.
 
@@ -36,6 +36,34 @@ dotnet build ECommerce.sln
 | Orders.API | 5003 | 7003 | http://localhost:5003/swagger |
 | Cart.API | 5005 | 7005 | http://localhost:5005/swagger |
 | Notifications.API | 5004 | 7004 | http://localhost:5004/swagger |
+
+## Arquitectura
+
+Mapa de dependencias entre los microservicios (quien valida contra quien):
+
+```
+Products.API (65085/65084) - catalogo de productos
+  sin dependencias
+
+Users.API (5002/7002) - usuarios
+  sin dependencias
+
+Cart.API (5005/7005) - carrito de compras
+  --> Products.API   (valida que el producto exista y tenga stock)
+
+Notifications.API (5004/7004) - notificaciones
+  --> Users.API      (valida que el usuario exista)
+
+Orders.API (5003/7003) - ordenes
+  --> Users.API      (valida que el usuario exista)
+  --> Products.API   (valida producto y stock)
+```
+
+Nota: Products.API esta pensado para consultar `GET /api/orders/product/{id}/active`
+en Orders.API y resolver asi PRD-004 (no permitir eliminar un producto con ordenes
+activas). Esa llamada todavia no esta implementada (el chequeo esta comentado en
+Products.API), asi que por ahora **no** existe una dependencia real Products.API -> Orders.API,
+solo el endpoint ya preparado en Orders.API para cuando se complete.
 
 ---
 
