@@ -1,10 +1,11 @@
-﻿using Products.API.DTOs;
+﻿using Products.API.Http;
+using Products.API.DTOs;
 using Products.API.Exceptions;
 using Products.API.Models;
 
 namespace Products.API.Services;
 
-public class ProductoService : IProductoService
+public class ProductoService(OrdersClient ordersClient) : IProductoService
 {
     private static readonly List<Producto> _productos = new();
 
@@ -77,20 +78,18 @@ public class ProductoService : IProductoService
         return Task.FromResult(MapearAResponseDto(producto));
     }
 
-    public Task EliminarAsync(Guid id)
+    public async Task EliminarAsync(Guid id)
     {
         var producto = _productos.FirstOrDefault(p => p.Id == id);
 
         if (producto is null)
             throw new NotFoundException("PRD-001", "Producto no encontrado.");
 
-        // Regla PRD-004: Cuando integremos con Orders.API o la capa de persistencia,
-        // aquí se validará si tiene órdenes activas.
-        // Si tuviera órdenes activas lanzaríamos:
-        // throw new BusinessRuleException("PRD-004", "El producto tiene órdenes activas y no puede eliminarse.");
+        // Regla PRD-004: Orders informa si hay órdenes Pendiente o Confirmada con este producto.
+        if (await ordersClient.TieneOrdenesActivasAsync(id))
+            throw new BusinessRuleException("PRD-004", "El producto tiene órdenes activas y no puede eliminarse.");
 
         _productos.Remove(producto);
-        return Task.CompletedTask;
     }
 
     private static ProductoResponseDto MapearAResponseDto(Producto p) => new()
