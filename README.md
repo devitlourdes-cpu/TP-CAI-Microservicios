@@ -118,8 +118,7 @@ También se puede ejecutar desde Visual Studio, con Products.API como proyecto d
 | PRD-001 | 404 | Producto no encontrado. | GET, PUT o DELETE con un ID que no existe |
 | PRD-002 | 400 | Los datos del producto son inválidos. | POST o PUT con campos faltantes o con formato incorrecto |
 | PRD-003 | 409 | Ya existe un producto con ese nombre en la categoría. | POST de un producto duplicado |
-| PRD-004 | 409 | El producto tiene órdenes activas y no puede eliminarse. | DELETE con órdenes Pendientes o Confirmadas (requiere Orders.API) |
-| PRD-005 | 500 | Error interno al procesar el producto. | Error inesperado |
+   | PRD-004 | 409 | El producto tiene órdenes activas y no puede eliminarse. | DELETE con órdenes Pendiente o Confirmada (se consulta a Orders.API) || PRD-005 | 500 | Error interno al procesar el producto. | Error inesperado |
 
 Todos los errores tienen este formato:
 
