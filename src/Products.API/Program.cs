@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Products.API.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
 using Products.API.ExceptionHandlers;
@@ -61,6 +62,14 @@ try
         options.OperationFilter<ErrorExamplesOperationFilter>();
     });
     builder.Services.AddScoped<IProductoService, ProductoService>();
+
+    builder.Services.AddHttpContextAccessor();
+    builder.Services.AddTransient<CorrelationIdHandler>();
+    builder.Services.AddHttpClient<OrdersClient>(client =>
+    {
+        client.BaseAddress = new Uri(builder.Configuration["Services:Orders"] ?? "http://localhost:5003");
+        client.Timeout = TimeSpan.FromSeconds(10);
+    }).AddHttpMessageHandler<CorrelationIdHandler>();
 
     builder.Services.AddExceptionHandler<NotFoundExceptionHandler>();
     builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
