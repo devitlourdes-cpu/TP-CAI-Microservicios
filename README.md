@@ -39,11 +39,11 @@ dotnet build ECommerce.sln
 
 ## Arquitectura
 
-Mapa de dependencias entre los microservicios (quien valida contra quien):
+Mapa de dependencias entre los microservicios (quien valida/consulta contra quien):
 
 ```
 Products.API (65085/65084) - catalogo de productos
-  sin dependencias
+  --> Orders.API     (verifica que el producto no tenga ordenes activas antes de eliminarlo, PRD-004)
 
 Users.API (5002/7002) - usuarios
   sin dependencias
@@ -59,11 +59,12 @@ Orders.API (5003/7003) - ordenes
   --> Products.API   (valida producto y stock)
 ```
 
-Nota: Products.API esta pensado para consultar `GET /api/orders/product/{id}/active`
-en Orders.API y resolver asi PRD-004 (no permitir eliminar un producto con ordenes
-activas). Esa llamada todavia no esta implementada (el chequeo esta comentado en
-Products.API), asi que por ahora **no** existe una dependencia real Products.API -> Orders.API,
-solo el endpoint ya preparado en Orders.API para cuando se complete.
+Nota: Products.API y Orders.API se llaman mutuamente. Orders.API consulta a Products.API
+para validar producto y stock al crear una orden, y Products.API consulta a Orders.API
+(`GET /api/orders/product/{id}/active`) para no permitir eliminar un producto con ordenes
+activas (PRD-004). Es una dependencia circular a nivel de llamadas HTTP en tiempo de
+ejecucion, algo normal entre microservicios; no hay dependencia circular en tiempo de
+compilacion, cada servicio sigue siendo independiente.
 
 ---
 
@@ -78,16 +79,17 @@ Microservicio de catálogo de productos del e-commerce. Permite listar, consulta
 | Swagger | https://localhost:65084/swagger |
 | Persistencia | En memoria (los datos se pierden al reiniciar el servicio) |
 | Logs | Consola y archivo `logs/products-api-<fecha>.json` |
+| Depende de | Orders.API (solo para el chequeo de PRD-004 al eliminar) |
 
 ### Cómo ejecutarlo
 
-Desde la raíz del repositorio:
+Necesita Orders.API levantado para poder eliminar productos (chequeo de PRD-004); el resto de las operaciones funcionan igual sin él. Lo más simple es `./scripts/run-all.sh`.
 
 ```bash
 dotnet run --project src/Products.API
 ```
 
-También se puede ejecutar desde Visual Studio, con Products.API como proyecto de inicio.
+También se puede ejecutar desde Visual Studio, con Products.API como proyecto de inicio. La URL de Orders.API sale de la sección `Services` de `appsettings.json`.
 
 ### Endpoints
 
@@ -118,7 +120,8 @@ También se puede ejecutar desde Visual Studio, con Products.API como proyecto d
 | PRD-001 | 404 | Producto no encontrado. | GET, PUT o DELETE con un ID que no existe |
 | PRD-002 | 400 | Los datos del producto son inválidos. | POST o PUT con campos faltantes o con formato incorrecto |
 | PRD-003 | 409 | Ya existe un producto con ese nombre en la categoría. | POST de un producto duplicado |
-   | PRD-004 | 409 | El producto tiene órdenes activas y no puede eliminarse. | DELETE con órdenes Pendiente o Confirmada (se consulta a Orders.API) || PRD-005 | 500 | Error interno al procesar el producto. | Error inesperado |
+| PRD-004 | 409 | El producto tiene órdenes activas y no puede eliminarse. | DELETE con órdenes Pendiente o Confirmada (se consulta a Orders.API) |
+| PRD-005 | 500 | Error interno al procesar el producto. | Error inesperado |
 
 Todos los errores tienen este formato:
 
