@@ -13,6 +13,7 @@ using Notifications.API.ExceptionHandlers;
 using Notifications.API.Middlewares;
 using Notifications.API.Exceptions;
 using Notifications.API.Services;
+using Notifications.API.Swagger;
 
 const string Servicio = "Notifications.API";
 
@@ -81,6 +82,8 @@ builder.Services.AddSwaggerGen(options =>
     // Para que Swagger muestre los comentarios del codigo.
     var xml = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
     if (File.Exists(xml)) options.IncludeXmlComments(xml, includeControllerXmlComments: true);
+
+    options.OperationFilter<ErrorExamplesOperationFilter>();
 });
 
 var app = builder.Build();
