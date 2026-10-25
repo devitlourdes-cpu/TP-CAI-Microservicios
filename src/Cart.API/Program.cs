@@ -13,6 +13,7 @@ using Cart.API.ExceptionHandlers;
 using Cart.API.Middlewares;
 using Cart.API.Exceptions;
 using Cart.API.Services;
+using Cart.API.Swagger;
 
 const string Servicio = "Cart.API";
 
@@ -82,6 +83,8 @@ builder.Services.AddSwaggerGen(options =>
     // Para que Swagger muestre los comentarios del codigo.
     var xml = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
     if (File.Exists(xml)) options.IncludeXmlComments(xml, includeControllerXmlComments: true);
+
+    options.OperationFilter<ErrorExamplesOperationFilter>();
 });
 
 var app = builder.Build();
