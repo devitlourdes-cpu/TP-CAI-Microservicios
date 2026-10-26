@@ -21,6 +21,23 @@ En Windows se corre desde Git Bash.
 dotnet run --project src/Users.API
 ```
 
+## Si se levanta desde Visual Studio
+
+Desde Visual Studio las llamadas entre servicios van por HTTPS, así que la máquina tiene que
+confiar en el certificado de desarrollo de .NET. Se hace una sola vez:
+
+1. Abrir una terminal.
+2. Correr:
+
+   ```bash
+   dotnet dev-certs https --trust
+   ```
+
+3. En el cartel de Windows que pregunta si se instala el certificado, elegir **Sí**.
+4. Si Visual Studio estaba abierto, cerrarlo y volver a abrirlo.
+
+Con `./scripts/run-all.sh` no hace falta.
+
 ## Compilar
 
 ```bash
