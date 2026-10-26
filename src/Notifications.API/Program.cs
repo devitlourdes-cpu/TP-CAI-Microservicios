@@ -1,0 +1,140 @@
+using System.Reflection;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.OpenApi;
+using Serilog;
+using Serilog.Formatting.Compact;
+using Notifications.API.Clients;
+using Notifications.API.Constants;
+using Notifications.API.ExceptionHandlers;
+using Notifications.API.Middlewares;
+using Notifications.API.Exceptions;
+using Notifications.API.Services;
+using Notifications.API.Swagger;
+
+const string Servicio = "Notifications.API";
+
+// Serilog va primero para que cualquier error de arranque quede logueado.
+// Consola legible + archivo JSON.
+Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Service", Servicio)
+    .WriteTo.Console(outputTemplate:
+        "[{Timestamp:HH:mm:ss} {Level:u3}] [{Service}] [{Endpoint}] [CorrelationId: {CorrelationId}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File(new CompactJsonFormatter(), "logs/notifications-api-.json",
+        rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
+    .CreateLogger();
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog();
+
+builder.Services.AddControllers();
+
+// Por defecto ASP.NET responde los errores de validacion en un formato que no es el que
+// pide el enunciado, asi que lanzamos nuestra excepcion y la traduce el handler.
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errores = context.ModelState.SelectMany(e => e.Value!.Errors.Select(x => x.ErrorMessage));
+        throw new ValidationException(ErrorCodes.NTF_002, $"{string.Join("; ", errores)}.");
+    };
+});
+
+// Del mas especifico al mas generico.
+builder.Services.AddExceptionHandler<NotFoundExceptionHandler>();
+builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+// Singleton para que las notificaciones registradas no se pierdan entre requests.
+builder.Services.AddSingleton<INotificationService, NotificationService>();
+
+// Cliente HTTP hacia Users.API (seccion 7: IHttpClientFactory). La URL base es
+// configurable por appsettings/variable de entorno para no hardcodear el puerto.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<CorrelationIdDelegatingHandler>();
+builder.Services.AddHttpClient<IUsersApiClient, UsersApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["UsersApi:BaseUrl"] ?? "https://localhost:7002";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(5);
+}).AddHttpMessageHandler<CorrelationIdDelegatingHandler>();
+
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy("El servicio responde."), tags: ["live"])
+    .AddCheck("notificaciones", () => HealthCheckResult.Healthy("El servicio de notificaciones responde."), tags: ["ready"]);
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Notifications API",
+        Version = "v1",
+        Description = "Microservicio de notificaciones (envio simulado). Todos los errores incluyen errorCode y errorMessage. " +
+                      "Depende de Users.API para validar que el usuario destinatario exista."
+    });
+
+    // Para que Swagger muestre los comentarios del codigo.
+    var xml = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
+    if (File.Exists(xml)) options.IncludeXmlComments(xml, includeControllerXmlComments: true);
+
+    options.OperationFilter<ErrorExamplesOperationFilter>();
+});
+
+var app = builder.Build();
+
+// Va primero para que el Correlation ID exista en todos los logs del request.
+app.UseMiddleware<CorrelationIdMiddleware>();
+
+// Loguea cada request con su duracion.
+app.UseSerilogRequestLogging();
+
+app.UseExceptionHandler();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.MapControllers();
+
+app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = EscribirHealth });
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = c => c.Tags.Contains("live"),
+    ResponseWriter = EscribirHealth
+});
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = c => c.Tags.Contains("ready"),
+    ResponseWriter = EscribirHealth
+});
+
+app.Run();
+
+static Task EscribirHealth(HttpContext context, HealthReport report)
+{
+    context.Response.ContentType = "application/json";
+
+    var body = new
+    {
+        servicio = Servicio,
+        estado = report.Status.ToString(),
+        checks = report.Entries.Select(e => new
+        {
+            nombre = e.Key,
+            estado = e.Value.Status.ToString(),
+            descripcion = e.Value.Description
+        })
+    };
+
+    return context.Response.WriteAsync(JsonSerializer.Serialize(body,
+        new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+}
