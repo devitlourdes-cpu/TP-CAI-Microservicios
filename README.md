@@ -93,7 +93,7 @@ Microservicio de catálogo de productos del e-commerce. Permite listar, consulta
 |---|---|
 | Puerto HTTP | 65085 |
 | Puerto HTTPS | 65084 |
-| Swagger | https://localhost:65084/swagger |
+| Swagger | http://localhost:65085/swagger |
 | Persistencia | En memoria (los datos se pierden al reiniciar el servicio) |
 | Logs | Consola y archivo `logs/products-api-<fecha>.json` |
 | Depende de | Orders.API (solo para el chequeo de PRD-004 al eliminar) |

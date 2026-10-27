@@ -3,26 +3,14 @@ using Products.API.Exceptions;
 
 namespace Products.API.ExceptionHandlers;
 
-public class ValidationExceptionHandler : IExceptionHandler
+public class ValidationExceptionHandler(ILogger<ValidationExceptionHandler> logger) : IExceptionHandler
 {
-    public async ValueTask<bool> TryHandleAsync(
-        HttpContext context, Exception exception,
-        CancellationToken cancellationToken)
+    public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception, CancellationToken ct)
     {
         if (exception is not ValidationException ex) return false;
 
-        context.Response.StatusCode = 400;
-        await context.Response.WriteAsJsonAsync(new
-        {
-            type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-            title = "Bad Request",
-            status = 400,
-            detail = ex.Message,
-            instance = context.Request.Path.Value,
-            errorCode = ex.ErrorCode,
-            errorMessage = ex.Message
-        }, cancellationToken: cancellationToken);
-
+        logger.LogWarning("Datos invalidos. {ErrorCode}: {ErrorMessage}", ex.ErrorCode, ex.Message);
+        await ErrorResponseWriter.WriteAsync(context, 400, ex.ErrorCode, ex.Message, ct);
         return true;
     }
 }
