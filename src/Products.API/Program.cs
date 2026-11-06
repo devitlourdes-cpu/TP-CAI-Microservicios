@@ -1,4 +1,5 @@
-﻿using Products.API.Http;
+﻿using Products.API.Constants;
+using Products.API.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
@@ -42,7 +43,7 @@ try
         options.InvalidModelStateResponseFactory = context =>
         {
             var errores = context.ModelState.SelectMany(e => e.Value!.Errors.Select(x => x.ErrorMessage));
-            throw new ValidationException("PRD-002", $"{string.Join("; ", errores)}.");
+            throw new ValidationException(ErrorCodes.PRD_002, $"{string.Join("; ", errores)}.");
         };
     });
 
