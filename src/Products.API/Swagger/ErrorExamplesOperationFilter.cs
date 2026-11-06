@@ -1,4 +1,5 @@
-﻿using Microsoft.OpenApi.Any;
+﻿using Products.API.Constants;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -31,27 +32,27 @@ public class ErrorExamplesOperationFilter : IOperationFilter
         ("GET" or "PUT" or "DELETE", "404") => Crear(404, "Not Found",
             "https://tools.ietf.org/html/rfc7231#section-6.5.4",
             "El recurso solicitado no fue encontrado.", ruta,
-            "PRD-001", "Producto no encontrado."),
+            ErrorCodes.PRD_001, "Producto no encontrado."),
 
         ("POST" or "PUT", "400") => Crear(400, "Bad Request",
             "https://tools.ietf.org/html/rfc7231#section-6.5.1",
             "Los datos enviados no son válidos.", ruta,
-            "PRD-002", "El precio debe ser mayor a 0."),
+            ErrorCodes.PRD_002, "El precio debe ser mayor a 0."),
 
         ("POST", "409") => Crear(409, "Conflict",
             "https://tools.ietf.org/html/rfc7231#section-6.5.9",
             "Ya existe un recurso con esos datos.", ruta,
-            "PRD-003", "Ya existe un producto con ese nombre en la categoría 'Electrónica'."),
+            ErrorCodes.PRD_003, "Ya existe un producto con ese nombre en la categoría 'Electrónica'."),
 
         ("DELETE", "409") => Crear(409, "Conflict",
             "https://tools.ietf.org/html/rfc7231#section-6.5.9",
             "No se puede eliminar el recurso.", ruta,
-            "PRD-004", "El producto tiene órdenes activas y no puede eliminarse."),
+            ErrorCodes.PRD_004, "El producto tiene órdenes activas y no puede eliminarse."),
 
         (_, "500") => Crear(500, "Internal Server Error",
             "https://tools.ietf.org/html/rfc7231#section-6.6.1",
             "Ocurrió un error inesperado al procesar la solicitud.", ruta,
-            "PRD-005", "Error interno al procesar el producto."),
+            ErrorCodes.PRD_005, "Error interno al procesar el producto."),
 
         _ => null
     };

@@ -1,4 +1,5 @@
-﻿using Products.API.Http;
+﻿using Products.API.Constants;
+using Products.API.Http;
 using Products.API.DTOs;
 using Products.API.Exceptions;
 using Products.API.Models;
@@ -32,7 +33,7 @@ public class ProductoService(OrdersClient ordersClient) : IProductoService
         var producto = _productos.FirstOrDefault(p => p.Id == id);
 
         if (producto is null)
-            throw new NotFoundException("PRD-001", "Producto no encontrado.");
+            throw new NotFoundException(ErrorCodes.PRD_001, "Producto no encontrado.");
 
         return Task.FromResult(MapearAResponseDto(producto));
     }
@@ -44,7 +45,7 @@ public class ProductoService(OrdersClient ordersClient) : IProductoService
             p.Categoria.Equals(dto.Categoria, StringComparison.OrdinalIgnoreCase));
 
         if (yaExiste)
-            throw new BusinessRuleException("PRD-003", $"Ya existe un producto con ese nombre en la categoría '{dto.Categoria}'.");
+            throw new BusinessRuleException(ErrorCodes.PRD_003, $"Ya existe un producto con ese nombre en la categoría '{dto.Categoria}'.");
 
         var producto = new Producto
         {
@@ -67,7 +68,7 @@ public class ProductoService(OrdersClient ordersClient) : IProductoService
         var producto = _productos.FirstOrDefault(p => p.Id == id);
 
         if (producto is null)
-            throw new NotFoundException("PRD-001", "Producto no encontrado.");
+            throw new NotFoundException(ErrorCodes.PRD_001, "Producto no encontrado.");
 
         producto.Nombre = dto.Nombre;
         producto.Descripcion = dto.Descripcion;
@@ -83,11 +84,11 @@ public class ProductoService(OrdersClient ordersClient) : IProductoService
         var producto = _productos.FirstOrDefault(p => p.Id == id);
 
         if (producto is null)
-            throw new NotFoundException("PRD-001", "Producto no encontrado.");
+            throw new NotFoundException(ErrorCodes.PRD_001, "Producto no encontrado.");
 
         // Regla PRD-004: Orders informa si hay órdenes Pendiente o Confirmada con este producto.
         if (await ordersClient.TieneOrdenesActivasAsync(id))
-            throw new BusinessRuleException("PRD-004", "El producto tiene órdenes activas y no puede eliminarse.");
+            throw new BusinessRuleException(ErrorCodes.PRD_004, "El producto tiene órdenes activas y no puede eliminarse.");
 
         _productos.Remove(producto);
     }
