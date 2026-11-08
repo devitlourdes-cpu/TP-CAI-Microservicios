@@ -13,6 +13,7 @@ using Notifications.API.ExceptionHandlers;
 using Notifications.API.Middlewares;
 using Notifications.API.Exceptions;
 using Notifications.API.Services;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 const string Servicio = "Notifications.API";
 
@@ -34,14 +35,7 @@ builder.Services.AddControllers();
 
 // Por defecto ASP.NET responde los errores de validacion en un formato que no es el que
 // pide el enunciado, asi que lanzamos nuestra excepcion y la traduce el handler.
-builder.Services.Configure<ApiBehaviorOptions>(options =>
-{
-    options.InvalidModelStateResponseFactory = context =>
-    {
-        var errores = context.ModelState.SelectMany(e => e.Value!.Errors.Select(x => x.ErrorMessage));
-        throw new ValidationException(ErrorCodes.NTF_002, $"{string.Join("; ", errores)}.");
-    };
-});
+builder.Services.Configure<ApiBehaviorOptions>(ConfigurarComportamientoApi);
 
 // Del mas especifico al mas generico.
 builder.Services.AddExceptionHandler<NotFoundExceptionHandler>();
@@ -56,32 +50,15 @@ builder.Services.AddSingleton<INotificationService, NotificationService>();
 // configurable por appsettings/variable de entorno para no hardcodear el puerto.
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<CorrelationIdDelegatingHandler>();
-builder.Services.AddHttpClient<IUsersApiClient, UsersApiClient>(client =>
-{
-    var baseUrl = builder.Configuration["UsersApi:BaseUrl"] ?? "https://localhost:7002";
-    client.BaseAddress = new Uri(baseUrl);
-    client.Timeout = TimeSpan.FromSeconds(5);
-}).AddHttpMessageHandler<CorrelationIdDelegatingHandler>();
+builder.Services.AddHttpClient<IUsersApiClient, UsersApiClient>(ConfigurarClienteUsers)
+    .AddHttpMessageHandler<CorrelationIdDelegatingHandler>();
 
 builder.Services.AddHealthChecks()
-    .AddCheck("self", () => HealthCheckResult.Healthy("El servicio responde."), tags: ["live"])
-    .AddCheck("notificaciones", () => HealthCheckResult.Healthy("El servicio de notificaciones responde."), tags: ["ready"]);
+    .AddCheck("self", ChequeoSelf, tags: ["live"])
+    .AddCheck("notificaciones", ChequeoNotificaciones, tags: ["ready"]);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Notifications API",
-        Version = "v1",
-        Description = "Microservicio de notificaciones (envio simulado). Todos los errores incluyen errorCode y errorMessage. " +
-                      "Depende de Users.API para validar que el usuario destinatario exista."
-    });
-
-    // Para que Swagger muestre los comentarios del codigo.
-    var xml = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
-    if (File.Exists(xml)) options.IncludeXmlComments(xml, includeControllerXmlComments: true);
-});
+builder.Services.AddSwaggerGen(ConfigurarSwagger);
 
 var app = builder.Build();
 
@@ -105,31 +82,98 @@ app.MapControllers();
 app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = EscribirHealth });
 app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
-    Predicate = c => c.Tags.Contains("live"),
+    Predicate = EsLive,
     ResponseWriter = EscribirHealth
 });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
-    Predicate = c => c.Tags.Contains("ready"),
+    Predicate = EsReady,
     ResponseWriter = EscribirHealth
 });
 
 app.Run();
 
+// --- Configuracion y helpers, como metodos con nombre en vez de lambdas ---
+
+static void ConfigurarComportamientoApi(ApiBehaviorOptions options)
+{
+    options.InvalidModelStateResponseFactory = ManejarEstadoInvalido;
+}
+
+static IActionResult ManejarEstadoInvalido(ActionContext context)
+{
+    var errores = new List<string>();
+    foreach (var entry in context.ModelState.Values)
+    {
+        foreach (var error in entry.Errors)
+        {
+            errores.Add(error.ErrorMessage);
+        }
+    }
+    throw new ValidationException(ErrorCodes.NTF_002, $"{string.Join("; ", errores)}.");
+}
+
+void ConfigurarClienteUsers(HttpClient client)
+{
+    var baseUrl = builder.Configuration["UsersApi:BaseUrl"] ?? "https://localhost:7002";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(5);
+}
+
+static void ConfigurarSwagger(SwaggerGenOptions options)
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Notifications API",
+        Version = "v1",
+        Description = "Microservicio de notificaciones (envio simulado). Todos los errores incluyen errorCode y errorMessage. " +
+                      "Depende de Users.API para validar que el usuario destinatario exista."
+    });
+
+    var xml = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
+    if (File.Exists(xml)) options.IncludeXmlComments(xml, includeControllerXmlComments: true);
+}
+
+static HealthCheckResult ChequeoSelf()
+{
+    return HealthCheckResult.Healthy("El servicio responde.");
+}
+
+static HealthCheckResult ChequeoNotificaciones()
+{
+    return HealthCheckResult.Healthy("El servicio de notificaciones responde.");
+}
+
+static bool EsLive(HealthCheckRegistration c)
+{
+    return c.Tags.Contains("live");
+}
+
+static bool EsReady(HealthCheckRegistration c)
+{
+    return c.Tags.Contains("ready");
+}
+
 static Task EscribirHealth(HttpContext context, HealthReport report)
 {
     context.Response.ContentType = "application/json";
+
+    var checks = new List<object>();
+    foreach (var entry in report.Entries)
+    {
+        checks.Add(new
+        {
+            nombre = entry.Key,
+            estado = entry.Value.Status.ToString(),
+            descripcion = entry.Value.Description
+        });
+    }
 
     var body = new
     {
         servicio = Servicio,
         estado = report.Status.ToString(),
-        checks = report.Entries.Select(e => new
-        {
-            nombre = e.Key,
-            estado = e.Value.Status.ToString(),
-            descripcion = e.Value.Description
-        })
+        checks
     };
 
     return context.Response.WriteAsync(JsonSerializer.Serialize(body,

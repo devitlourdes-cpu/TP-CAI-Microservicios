@@ -50,22 +50,38 @@ public class NotificationService(IUsersApiClient usersApi) : INotificationServic
     {
         lock (_candado)
         {
-            var propias = _notificaciones.Where(n => n.UsuarioId == usuarioId).ToList();
+            var propias = new List<Notificacion>();
+            foreach (var n in _notificaciones)
+            {
+                if (n.UsuarioId == usuarioId)
+                {
+                    propias.Add(n);
+                }
+            }
 
             if (propias.Count == 0)
                 throw new NotFoundException(ErrorCodes.NTF_003, "No se encontraron notificaciones para el usuario.");
 
-            return propias.Select(Mapear).ToList();
+            var resultado = new List<NotificacionResponseDto>();
+            foreach (var n in propias)
+            {
+                resultado.Add(Mapear(n));
+            }
+
+            return resultado;
         }
     }
 
-    private static NotificacionResponseDto Mapear(Notificacion n) => new()
+    private static NotificacionResponseDto Mapear(Notificacion n)
     {
-        Id = n.Id,
-        UsuarioId = n.UsuarioId,
-        Mensaje = n.Mensaje,
-        Tipo = n.Tipo,
-        Estado = n.Estado,
-        FechaEnvio = n.FechaEnvio
-    };
+        return new NotificacionResponseDto
+        {
+            Id = n.Id,
+            UsuarioId = n.UsuarioId,
+            Mensaje = n.Mensaje,
+            Tipo = n.Tipo,
+            Estado = n.Estado,
+            FechaEnvio = n.FechaEnvio
+        };
+    }
 }

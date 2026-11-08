@@ -22,9 +22,18 @@ public class OrderService(
 
         // Se suman las cantidades por producto: si el mismo producto viene repetido en
         // varios items, el stock tiene que alcanzar para el total y no para cada linea.
-        var cantidadPedida = request.Items
-            .GroupBy(i => i.ProductoId)
-            .ToDictionary(g => g.Key, g => g.Sum(i => i.Cantidad));
+        var cantidadPedida = new Dictionary<Guid, int>();
+        foreach (var item in request.Items)
+        {
+            if (cantidadPedida.ContainsKey(item.ProductoId))
+            {
+                cantidadPedida[item.ProductoId] += item.Cantidad;
+            }
+            else
+            {
+                cantidadPedida[item.ProductoId] = item.Cantidad;
+            }
+        }
 
         var precios = new Dictionary<Guid, decimal>();
 
@@ -41,21 +50,32 @@ public class OrderService(
             precios[productoId] = producto.Precio;
         }
 
-        var order = new Order
+        var items = new List<OrderItem>();
+        foreach (var i in request.Items)
         {
-            Id = Guid.NewGuid(),
-            UsuarioId = request.UsuarioId,
-            Items = [.. request.Items.Select(i => new OrderItem
+            items.Add(new OrderItem
             {
                 ProductoId = i.ProductoId,
                 Cantidad = i.Cantidad,
                 PrecioUnitario = precios[i.ProductoId]
-            })],
+            });
+        }
+
+        var order = new Order
+        {
+            Id = Guid.NewGuid(),
+            UsuarioId = request.UsuarioId,
+            Items = items,
             Estado = OrderStates.Pendiente,
             FechaCreacion = DateTime.UtcNow
         };
 
-        order.Total = order.Items.Sum(i => i.Cantidad * i.PrecioUnitario);
+        var total = 0m;
+        foreach (var i in order.Items)
+        {
+            total += i.Cantidad * i.PrecioUnitario;
+        }
+        order.Total = total;
 
         lock (_candado)
         {
@@ -72,10 +92,37 @@ public class OrderService(
     {
         lock (_candado)
         {
-            return [.. _orders
-                .Where(o => usuarioId is null || o.UsuarioId == usuarioId)
-                .OrderByDescending(o => o.FechaCreacion)
-                .Select(Map)];
+            var filtradas = new List<Order>();
+            foreach (var o in _orders)
+            {
+                if (usuarioId is null || o.UsuarioId == usuarioId)
+                {
+                    filtradas.Add(o);
+                }
+            }
+
+            // Se ordenan de la mas nueva a la mas vieja (burbuja simple, alcanza
+            // con la cantidad de ordenes que maneja este servicio en memoria).
+            for (var i = 0; i < filtradas.Count - 1; i++)
+            {
+                for (var j = 0; j < filtradas.Count - 1 - i; j++)
+                {
+                    if (filtradas[j].FechaCreacion < filtradas[j + 1].FechaCreacion)
+                    {
+                        var temp = filtradas[j];
+                        filtradas[j] = filtradas[j + 1];
+                        filtradas[j + 1] = temp;
+                    }
+                }
+            }
+
+            var resultado = new List<OrderResponse>();
+            foreach (var o in filtradas)
+            {
+                resultado.Add(Map(o));
+            }
+
+            return resultado;
         }
     }
 
@@ -83,8 +130,18 @@ public class OrderService(
     {
         lock (_candado)
         {
-            var order = _orders.FirstOrDefault(o => o.Id == id)
-                ?? throw new NotFoundException(ErrorCodes.ORD_001, "Orden no encontrada.");
+            Order? order = null;
+            foreach (var o in _orders)
+            {
+                if (o.Id == id)
+                {
+                    order = o;
+                    break;
+                }
+            }
+
+            if (order is null)
+                throw new NotFoundException(ErrorCodes.ORD_001, "Orden no encontrada.");
 
             return Map(order);
         }
@@ -102,8 +159,18 @@ public class OrderService(
 
         lock (_candado)
         {
-            var order = _orders.FirstOrDefault(o => o.Id == id)
-                ?? throw new NotFoundException(ErrorCodes.ORD_001, "Orden no encontrada.");
+            Order? order = null;
+            foreach (var o in _orders)
+            {
+                if (o.Id == id)
+                {
+                    order = o;
+                    break;
+                }
+            }
+
+            if (order is null)
+                throw new NotFoundException(ErrorCodes.ORD_001, "Orden no encontrada.");
 
             if (!OrderStates.PuedePasarA(order.Estado, nuevo))
                 throw new BusinessRuleException(ErrorCodes.ORD_006,
@@ -128,24 +195,42 @@ public class OrderService(
     {
         lock (_candado)
         {
-            return _orders.Any(o =>
-                OrderStates.Activos.Contains(o.Estado) &&
-                o.Items.Any(i => i.ProductoId == productoId));
+            foreach (var o in _orders)
+            {
+                if (!OrderStates.Activos.Contains(o.Estado)) continue;
+
+                foreach (var i in o.Items)
+                {
+                    if (i.ProductoId == productoId)
+                        return true;
+                }
+            }
+
+            return false;
         }
     }
 
-    private static OrderResponse Map(Order order) => new()
+    private static OrderResponse Map(Order order)
     {
-        Id = order.Id,
-        UsuarioId = order.UsuarioId,
-        Items = [.. order.Items.Select(i => new OrderItemResponse
+        var items = new List<OrderItemResponse>();
+        foreach (var i in order.Items)
         {
-            ProductoId = i.ProductoId,
-            Cantidad = i.Cantidad,
-            PrecioUnitario = i.PrecioUnitario
-        })],
-        Total = order.Total,
-        Estado = order.Estado,
-        FechaCreacion = order.FechaCreacion
-    };
+            items.Add(new OrderItemResponse
+            {
+                ProductoId = i.ProductoId,
+                Cantidad = i.Cantidad,
+                PrecioUnitario = i.PrecioUnitario
+            });
+        }
+
+        return new OrderResponse
+        {
+            Id = order.Id,
+            UsuarioId = order.UsuarioId,
+            Items = items,
+            Total = order.Total,
+            Estado = order.Estado,
+            FechaCreacion = order.FechaCreacion
+        };
+    }
 }

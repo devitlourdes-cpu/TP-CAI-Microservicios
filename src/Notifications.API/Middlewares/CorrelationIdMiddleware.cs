@@ -1,4 +1,4 @@
-﻿using Serilog.Context;
+using Serilog.Context;
 
 namespace Notifications.API.Middlewares;
 
@@ -10,16 +10,18 @@ public class CorrelationIdMiddleware(RequestDelegate next)
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var correlationId = context.Request.Headers[CorrelationIdHeader].FirstOrDefault();
+        var valoresHeader = context.Request.Headers[CorrelationIdHeader];
+        string? correlationId = valoresHeader.Count > 0 ? valoresHeader[0] : null;
         if (string.IsNullOrWhiteSpace(correlationId)) correlationId = Guid.NewGuid().ToString();
 
         context.Items[CorrelationIdHeader] = correlationId;
 
-        context.Response.OnStarting(() =>
+        Task EscribirHeaderCorrelationId()
         {
             context.Response.Headers[CorrelationIdHeader] = correlationId;
             return Task.CompletedTask;
-        });
+        }
+        context.Response.OnStarting(EscribirHeaderCorrelationId);
 
         using (LogContext.PushProperty("CorrelationId", correlationId))
         {
