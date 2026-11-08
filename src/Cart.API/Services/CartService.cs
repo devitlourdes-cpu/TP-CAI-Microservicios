@@ -1,4 +1,4 @@
-﻿using Cart.API.Clients;
+using Cart.API.Clients;
 using Cart.API.Constants;
 using Cart.API.DTOs;
 using Cart.API.Exceptions;
@@ -44,7 +44,16 @@ public class CartService(IProductsApiClient productsApi) : ICartService
             }
 
             // Si el producto ya estaba en el carrito, se reemplaza la cantidad (no se suma).
-            var item = carrito.Items.FirstOrDefault(i => i.ProductoId == dto.ProductoId);
+            CarritoItem? item = null;
+            foreach (var i in carrito.Items)
+            {
+                if (i.ProductoId == dto.ProductoId)
+                {
+                    item = i;
+                    break;
+                }
+            }
+
             if (item is null)
             {
                 carrito.Items.Add(new CarritoItem
@@ -80,8 +89,18 @@ public class CartService(IProductsApiClient productsApi) : ICartService
             var carrito = _carritos.GetValueOrDefault(userId)
                 ?? throw new NotFoundException(ErrorCodes.CRT_001, "No hay carrito activo para este usuario.");
 
-            var item = carrito.Items.FirstOrDefault(i => i.ProductoId == productId)
-                ?? throw new NotFoundException(ErrorCodes.CRT_002, "El producto no esta en el carrito.");
+            CarritoItem? item = null;
+            foreach (var i in carrito.Items)
+            {
+                if (i.ProductoId == productId)
+                {
+                    item = i;
+                    break;
+                }
+            }
+
+            if (item is null)
+                throw new NotFoundException(ErrorCodes.CRT_002, "El producto no esta en el carrito.");
 
             item.Cantidad = dto.Cantidad;
             item.PrecioUnitario = producto.Precio;
@@ -98,7 +117,16 @@ public class CartService(IProductsApiClient productsApi) : ICartService
             var carrito = _carritos.GetValueOrDefault(userId)
                 ?? throw new NotFoundException(ErrorCodes.CRT_001, "No hay carrito activo para este usuario.");
 
-            carrito.Items.RemoveAll(i => i.ProductoId == productId);
+            // Se recorre de atras para adelante para poder sacar elementos mientras
+            // se itera sin que la lista se corra de lugar.
+            for (var idx = carrito.Items.Count - 1; idx >= 0; idx--)
+            {
+                if (carrito.Items[idx].ProductoId == productId)
+                {
+                    carrito.Items.RemoveAt(idx);
+                }
+            }
+
             carrito.FechaActualizacion = DateTime.UtcNow;
             return Task.CompletedTask;
         }
@@ -117,16 +145,25 @@ public class CartService(IProductsApiClient productsApi) : ICartService
         }
     }
 
-    private static CarritoResponseDto Mapear(Carrito carrito) => new()
+    private static CarritoResponseDto Mapear(Carrito carrito)
     {
-        UsuarioId = carrito.UsuarioId,
-        FechaActualizacion = carrito.FechaActualizacion,
-        Items = carrito.Items.Select(i => new CarritoItemResponseDto
+        var items = new List<CarritoItemResponseDto>();
+        foreach (var i in carrito.Items)
         {
-            ProductoId = i.ProductoId,
-            NombreProducto = i.NombreProducto,
-            PrecioUnitario = i.PrecioUnitario,
-            Cantidad = i.Cantidad
-        }).ToList()
-    };
+            items.Add(new CarritoItemResponseDto
+            {
+                ProductoId = i.ProductoId,
+                NombreProducto = i.NombreProducto,
+                PrecioUnitario = i.PrecioUnitario,
+                Cantidad = i.Cantidad
+            });
+        }
+
+        return new CarritoResponseDto
+        {
+            UsuarioId = carrito.UsuarioId,
+            FechaActualizacion = carrito.FechaActualizacion,
+            Items = items
+        };
+    }
 }

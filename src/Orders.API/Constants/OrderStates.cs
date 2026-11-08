@@ -23,13 +23,38 @@ public static class OrderStates
         [Cancelada] = []
     };
 
-    public static bool Existe(string estado) =>
-        Todos.Contains(estado, StringComparer.OrdinalIgnoreCase);
+    public static bool Existe(string estado)
+    {
+        foreach (var e in Todos)
+        {
+            if (e.Equals(estado, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
 
-    public static bool PuedePasarA(string actual, string nuevo) =>
-        Transiciones.TryGetValue(actual, out var permitidos) &&
-        permitidos.Contains(nuevo, StringComparer.OrdinalIgnoreCase);
+    public static bool PuedePasarA(string actual, string nuevo)
+    {
+        if (!Transiciones.TryGetValue(actual, out var permitidos))
+            return false;
 
-    public static string Normalizar(string estado) =>
-        Todos.First(e => e.Equals(estado, StringComparison.OrdinalIgnoreCase));
+        foreach (var p in permitidos)
+        {
+            if (p.Equals(nuevo, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
+
+    public static string Normalizar(string estado)
+    {
+        // Existe(estado) ya se valido antes de llamar a este metodo, asi que
+        // siempre hay una coincidencia: el fallback de abajo nunca se alcanza.
+        foreach (var e in Todos)
+        {
+            if (e.Equals(estado, StringComparison.OrdinalIgnoreCase))
+                return e;
+        }
+        return estado;
+    }
 }

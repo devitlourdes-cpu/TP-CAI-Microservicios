@@ -1,4 +1,4 @@
-﻿using Products.API.Constants;
+using Products.API.Constants;
 using Products.API.Http;
 using Products.API.DTOs;
 using Products.API.Exceptions;
@@ -12,25 +12,39 @@ public class ProductoService(OrdersClient ordersClient) : IProductoService
 
     public Task<List<ProductoResponseDto>> ObtenerTodosAsync(string? categoria, string? nombre)
     {
-        var query = _productos.AsQueryable();
+        var resultado = new List<ProductoResponseDto>();
 
-        if (!string.IsNullOrWhiteSpace(categoria))
+        foreach (var producto in _productos)
         {
-            query = query.Where(p => p.Categoria.Equals(categoria, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(categoria) &&
+                !producto.Categoria.Equals(categoria, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(nombre) &&
+                !producto.Nombre.Contains(nombre, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            resultado.Add(MapearAResponseDto(producto));
         }
 
-        if (!string.IsNullOrWhiteSpace(nombre))
-        {
-            query = query.Where(p => p.Nombre.Contains(nombre, StringComparison.OrdinalIgnoreCase));
-        }
-
-        var resultado = query.Select(MapearAResponseDto).ToList();
         return Task.FromResult(resultado);
     }
 
     public Task<ProductoResponseDto> ObtenerPorIdAsync(Guid id)
     {
-        var producto = _productos.FirstOrDefault(p => p.Id == id);
+        Producto? producto = null;
+        foreach (var p in _productos)
+        {
+            if (p.Id == id)
+            {
+                producto = p;
+                break;
+            }
+        }
 
         if (producto is null)
             throw new NotFoundException(ErrorCodes.PRD_001, "Producto no encontrado.");
@@ -40,9 +54,16 @@ public class ProductoService(OrdersClient ordersClient) : IProductoService
 
     public Task<ProductoResponseDto> CrearAsync(CrearProductoDto dto)
     {
-        var yaExiste = _productos.Any(p =>
-            p.Nombre.Equals(dto.Nombre, StringComparison.OrdinalIgnoreCase) &&
-            p.Categoria.Equals(dto.Categoria, StringComparison.OrdinalIgnoreCase));
+        var yaExiste = false;
+        foreach (var p in _productos)
+        {
+            if (p.Nombre.Equals(dto.Nombre, StringComparison.OrdinalIgnoreCase) &&
+                p.Categoria.Equals(dto.Categoria, StringComparison.OrdinalIgnoreCase))
+            {
+                yaExiste = true;
+                break;
+            }
+        }
 
         if (yaExiste)
             throw new BusinessRuleException(ErrorCodes.PRD_003, $"Ya existe un producto con ese nombre en la categoría '{dto.Categoria}'.");
@@ -65,7 +86,15 @@ public class ProductoService(OrdersClient ordersClient) : IProductoService
 
     public Task<ProductoResponseDto> ActualizarAsync(Guid id, ActualizarProductoDto dto)
     {
-        var producto = _productos.FirstOrDefault(p => p.Id == id);
+        Producto? producto = null;
+        foreach (var p in _productos)
+        {
+            if (p.Id == id)
+            {
+                producto = p;
+                break;
+            }
+        }
 
         if (producto is null)
             throw new NotFoundException(ErrorCodes.PRD_001, "Producto no encontrado.");
@@ -81,7 +110,15 @@ public class ProductoService(OrdersClient ordersClient) : IProductoService
 
     public async Task EliminarAsync(Guid id)
     {
-        var producto = _productos.FirstOrDefault(p => p.Id == id);
+        Producto? producto = null;
+        foreach (var p in _productos)
+        {
+            if (p.Id == id)
+            {
+                producto = p;
+                break;
+            }
+        }
 
         if (producto is null)
             throw new NotFoundException(ErrorCodes.PRD_001, "Producto no encontrado.");
@@ -93,14 +130,17 @@ public class ProductoService(OrdersClient ordersClient) : IProductoService
         _productos.Remove(producto);
     }
 
-    private static ProductoResponseDto MapearAResponseDto(Producto p) => new()
+    private static ProductoResponseDto MapearAResponseDto(Producto p)
     {
-        Id = p.Id,
-        Nombre = p.Nombre,
-        Descripcion = p.Descripcion,
-        Precio = p.Precio,
-        Stock = p.Stock,
-        Categoria = p.Categoria,
-        FechaCreacion = p.FechaCreacion
-    };
+        return new ProductoResponseDto
+        {
+            Id = p.Id,
+            Nombre = p.Nombre,
+            Descripcion = p.Descripcion,
+            Precio = p.Precio,
+            Stock = p.Stock,
+            Categoria = p.Categoria,
+            FechaCreacion = p.FechaCreacion
+        };
+    }
 }
