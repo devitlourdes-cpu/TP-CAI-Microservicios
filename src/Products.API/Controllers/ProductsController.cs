@@ -7,6 +7,7 @@ namespace Products.API.Controllers;
 [ApiController]
 [Route("api/products")]
 [Produces("application/json")]
+[Tags("Products")]
 public class ProductsController : ControllerBase
 {
     private readonly IProductoService _productoService;

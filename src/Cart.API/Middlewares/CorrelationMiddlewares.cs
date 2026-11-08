@@ -1,4 +1,4 @@
-﻿using Serilog.Context;
+using Serilog.Context;
 
 namespace Cart.API.Middlewares;
 
@@ -10,18 +10,20 @@ public class CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationId
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var correlationId = context.Request.Headers[CorrelationIdHeader].FirstOrDefault();
+        var valoresHeader = context.Request.Headers[CorrelationIdHeader];
+        string? correlationId = valoresHeader.Count > 0 ? valoresHeader[0] : null;
         if (string.IsNullOrWhiteSpace(correlationId)) correlationId = Guid.NewGuid().ToString();
 
         context.Items[CorrelationIdHeader] = correlationId;
 
         // Se escribe en OnStarting porque UseExceptionHandler limpia la respuesta
         // al atrapar una excepcion y se llevaria el header puesto antes.
-        context.Response.OnStarting(() =>
+        Task EscribirHeaderCorrelationId()
         {
             context.Response.Headers[CorrelationIdHeader] = correlationId;
             return Task.CompletedTask;
-        });
+        }
+        context.Response.OnStarting(EscribirHeaderCorrelationId);
 
         using (LogContext.PushProperty("CorrelationId", correlationId))
         using (LogContext.PushProperty("Endpoint", $"{context.Request.Method} {context.Request.Path}"))

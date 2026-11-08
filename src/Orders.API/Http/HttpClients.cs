@@ -15,12 +15,14 @@ public static class HttpClients
 
         foreach (var (nombre, url) in servicios)
         {
-            services.AddHttpClient(nombre, c =>
+            void ConfigurarCliente(HttpClient c)
             {
                 c.BaseAddress = new Uri(url);
                 c.Timeout = TimeSpan.FromSeconds(10);
-            })
-            .AddHttpMessageHandler<CorrelationIdHandler>();
+            }
+
+            services.AddHttpClient(nombre, ConfigurarCliente)
+                .AddHttpMessageHandler<CorrelationIdHandler>();
         }
 
         return services;

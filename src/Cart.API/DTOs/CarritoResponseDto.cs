@@ -1,4 +1,4 @@
-﻿namespace Cart.API.DTOs;
+namespace Cart.API.DTOs;
 
 /// <summary>El carrito completo de un usuario.</summary>
 public class CarritoResponseDto
@@ -8,6 +8,18 @@ public class CarritoResponseDto
     public List<CarritoItemResponseDto> Items { get; set; } = [];
     /// <example>2024-03-10T10:50:00Z</example>
     public DateTime FechaActualizacion { get; set; }
+
     /// <example>3000</example>
-    public decimal Total => Items.Sum(i => i.Subtotal);
+    public decimal Total
+    {
+        get
+        {
+            decimal total = 0;
+            foreach (var item in Items)
+            {
+                total += item.Subtotal;
+            }
+            return total;
+        }
+    }
 }

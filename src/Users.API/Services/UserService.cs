@@ -22,7 +22,17 @@ public class UserService(ILogger<UserService> logger) : IUserService
 
         lock (_candado)
         {
-            if (_users.Any(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase)))
+            var yaExiste = false;
+            foreach (var u in _users)
+            {
+                if (u.Email.Equals(email, StringComparison.OrdinalIgnoreCase))
+                {
+                    yaExiste = true;
+                    break;
+                }
+            }
+
+            if (yaExiste)
                 throw new BusinessRuleException(ErrorCodes.USR_001, $"El email '{email}' ya está registrado.");
 
             var user = new User
@@ -48,8 +58,18 @@ public class UserService(ILogger<UserService> logger) : IUserService
     {
         lock (_candado)
         {
-            var user = _users.FirstOrDefault(u => u.Id == id)
-                ?? throw new NotFoundException(ErrorCodes.USR_007, "Usuario no encontrado.");
+            User? user = null;
+            foreach (var u in _users)
+            {
+                if (u.Id == id)
+                {
+                    user = u;
+                    break;
+                }
+            }
+
+            if (user is null)
+                throw new NotFoundException(ErrorCodes.USR_007, "Usuario no encontrado.");
 
             return Map(user);
         }
@@ -61,7 +81,15 @@ public class UserService(ILogger<UserService> logger) : IUserService
 
         lock (_candado)
         {
-            var user = _users.FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
+            User? user = null;
+            foreach (var u in _users)
+            {
+                if (u.Email.Equals(email, StringComparison.OrdinalIgnoreCase))
+                {
+                    user = u;
+                    break;
+                }
+            }
 
             // Si el email no existe se responde lo mismo que con password incorrecta,
             // para no revelar que emails estan registrados.
@@ -106,25 +134,34 @@ public class UserService(ILogger<UserService> logger) : IUserService
     // USR-004 y USR-005 son los dos 403 posibles y comparten Activo en false.
     // Se distinguen por los intentos: con 3 o mas fue el bloqueo automatico,
     // si no, la cuenta la desactivaron a mano por fraude.
-    private static BusinessRuleException Bloqueada(User user) =>
-        user.IntentosFallidos >= MaxIntentosFallidos
-            ? new BusinessRuleException(ErrorCodes.USR_004,
-                "Su cuenta fue bloqueada por superar el máximo de intentos fallidos. Contacte a soporte.", 403)
-            : new BusinessRuleException(ErrorCodes.USR_005,
-                "Su cuenta fue suspendida por razones de seguridad. Contacte a soporte.", 403);
+    private static BusinessRuleException Bloqueada(User user)
+    {
+        if (user.IntentosFallidos >= MaxIntentosFallidos)
+        {
+            return new BusinessRuleException(ErrorCodes.USR_004,
+                "Su cuenta fue bloqueada por superar el máximo de intentos fallidos. Contacte a soporte.", 403);
+        }
+        return new BusinessRuleException(ErrorCodes.USR_005,
+            "Su cuenta fue suspendida por razones de seguridad. Contacte a soporte.", 403);
+    }
 
     // Pasa la entidad al DTO, asi el PasswordHash nunca sale en una respuesta.
-    private static UserResponse Map(User user) => new()
+    private static UserResponse Map(User user)
     {
-        Id = user.Id,
-        Nombre = user.Nombre,
-        Apellido = user.Apellido,
-        Email = user.Email,
-        FechaRegistro = user.FechaRegistro,
-        Activo = user.Activo
-    };
+        return new UserResponse
+        {
+            Id = user.Id,
+            Nombre = user.Nombre,
+            Apellido = user.Apellido,
+            Email = user.Email,
+            FechaRegistro = user.FechaRegistro,
+            Activo = user.Activo
+        };
+    }
 
     // La contrasena nunca se guarda en texto plano.
-    private static string Hash(string password) =>
-        Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(password)));
+    private static string Hash(string password)
+    {
+        return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(password)));
+    }
 }
