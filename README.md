@@ -417,3 +417,57 @@ dotnet run --project src/Notifications.API
 | NTF-002 | 400 | Los datos de la notificación son inválidos. | Campos faltantes o un tipo no reconocido |
 | NTF-003 | 404 | No se encontraron notificaciones para el usuario. | GET /api/notifications/{userId} sin notificaciones registradas |
 | NTF-004 | 500 | Error interno al procesar la notificación. | Error inesperado |
+
+## Capturas de Swagger — Catálogo de errores
+
+Esta sección reúne, para cada servicio, una captura real de Swagger UI por cada código de error de negocio del catálogo (sección 4 del enunciado), mostrando el body completo de la respuesta con su `errorCode` y `errorMessage`. No se incluyen los códigos `*-500` (el manejador genérico de errores no controlados): es el mismo `GlobalExceptionHandler` en los 5 servicios y no es seguro de forzar a propósito.
+
+### Products.API
+
+| Código | HTTP | Descripción | Captura |
+|---|---|---|---|
+| PRD-001 | 404 | Producto no encontrado | [ver](docs/screenshots/prd-001-404.png) |
+| PRD-002 | 400 | Datos del producto inválidos | [ver](docs/screenshots/prd-002-400.png) |
+| PRD-003 | 409 | Ya existe un producto con ese nombre en la categoría | [ver](docs/screenshots/prd-003-409.png) |
+| PRD-004 | 409 | El producto tiene órdenes activas | [ver](docs/screenshots/prd-004-409.png) |
+
+### Users.API
+
+| Código | HTTP | Descripción | Captura |
+|---|---|---|---|
+| USR-001 | 409 | El email ya está registrado | [ver](docs/screenshots/usr-001-409.png) |
+| USR-002 | 400 | Datos del usuario inválidos | [ver](docs/screenshots/usr-002-400.png) |
+| USR-003 | 401 | Credenciales incorrectas | [ver](docs/screenshots/usr-003-401.png) |
+| USR-004 | 403 | Cuenta bloqueada por intentos fallidos | [ver](docs/screenshots/usr-004-403.png) |
+| USR-005 | 403 | Cuenta suspendida por fraude | No reproducible vía API — ver nota abajo |
+| USR-007 | 404 | Usuario no encontrado | [ver](docs/screenshots/usr-007-404.png) |
+
+> **Nota sobre USR-005**: este código está documentado en `ErrorCodes.cs` y en `UserService.cs`, pero la API no expone ningún endpoint para desactivar manualmente una cuenta sin pasar por el contador de intentos fallidos (que es USR-004). Es un código pensado para una futura funcionalidad de administración; con la API tal como está hoy no hay forma de dispararlo en vivo.
+
+### Orders.API
+
+| Código | HTTP | Descripción | Captura |
+|---|---|---|---|
+| ORD-001 | 404 | Orden no encontrada | [ver](docs/screenshots/ord-001-404.png) |
+| ORD-002 | 400 | Datos de la orden inválidos | [ver](docs/screenshots/ord-002-400.png) |
+| ORD-003 | 404 | Usuario no encontrado al crear la orden | [ver](docs/screenshots/ord-003-404.png) |
+| ORD-004 | 404 | Producto no encontrado al crear la orden | [ver](docs/screenshots/ord-004-404.png) |
+| ORD-005 | 422 | Stock insuficiente | [ver](docs/screenshots/ord-005-422.png) |
+| ORD-006 | 409 | El estado no puede ser modificado | [ver](docs/screenshots/ord-006-409.png) |
+
+### Cart.API
+
+| Código | HTTP | Descripción | Captura |
+|---|---|---|---|
+| CRT-001 | 404 | Carrito no encontrado | [ver](docs/screenshots/crt-001-404.png) |
+| CRT-002 | 404 | Producto no encontrado | [ver](docs/screenshots/crt-002-404.png) |
+| CRT-003 | 422 | Stock insuficiente | [ver](docs/screenshots/crt-003-422.png) |
+| CRT-004 | 400 | Cantidad inválida | [ver](docs/screenshots/crt-004-400.png) |
+
+### Notifications.API
+
+| Código | HTTP | Descripción | Captura |
+|---|---|---|---|
+| NTF-001 | 404 | Usuario no encontrado | [ver](docs/screenshots/ntf-001-404.png) |
+| NTF-002 | 400 | Tipo de notificación no reconocido | [ver](docs/screenshots/ntf-002-400.png) |
+| NTF-003 | 404 | No se encontraron notificaciones para el usuario | [ver](docs/screenshots/ntf-003-404.png) |
